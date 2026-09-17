@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Submit Maintenance Request - RailOpt AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;family=Public+Sans:wght@400;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#001f24",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#594400",
+            "on-tertiary-fixed": "#251a00",
+            "surface-container-high": "#242b2d",
+            "primary-container": "#00e5ff",
+            "outline-variant": "#3b494c",
+            "tertiary-container": "#fec931",
+            "on-primary-fixed-variant": "#004f58",
+            "on-primary": "#00363d",
+            "inverse-on-surface": "#2a3233",
+            "surface-container": "#192122",
+            "primary": "#c3f5ff",
+            "on-tertiary-container": "#6f5500",
+            "on-surface-variant": "#bac9cc",
+            "background": "#0d1516",
+            "surface-tint": "#00daf3",
+            "on-secondary-fixed": "#001f24",
+            "surface-variant": "#2e3638",
+            "on-tertiary": "#3e2e00",
+            "secondary-container": "#11505a",
+            "primary-fixed-dim": "#00daf3",
+            "inverse-surface": "#dce4e5",
+            "surface-container-lowest": "#080f11",
+            "inverse-primary": "#006875",
+            "on-surface": "#dce4e5",
+            "on-secondary-container": "#8ac1cc",
+            "on-primary-container": "#00626e",
+            "surface-dim": "#0d1516",
+            "surface": "#0d1516",
+            "error": "#ffb4ab",
+            "tertiary-fixed-dim": "#f3bf26",
+            "tertiary-fixed": "#ffdf96",
+            "secondary": "#98d0da",
+            "on-secondary-fixed-variant": "#0d4e57",
+            "secondary-fixed-dim": "#98d0da",
+            "on-secondary": "#00363d",
+            "on-background": "#dce4e5",
+            "surface-container-highest": "#2e3638",
+            "surface-bright": "#333a3c",
+            "primary-fixed": "#9cf0ff",
+            "tertiary": "#ffeac0",
+            "secondary-fixed": "#b3ecf7",
+            "surface-container-low": "#151d1e",
+            "outline": "#849396",
+            "on-error": "#690005"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {},
+          "fontFamily": {
+            "headline": [
+              "Inter"
+            ],
+            "display": [
+              "Inter"
+            ],
+            "body": [
+              "Inter"
+            ],
+            "label": [
+              "Public Sans"
+            ],
+            "mono": [
+              "JetBrains Mono"
+            ]
+          },
+          "fontSize": {}
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #0B1120;
+    }
+  </style>
+</head>
+<body class="text-on-background font-body antialiased overflow-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-container-high dark:bg-surface-container-high font-headline text-on-surface font-bold border-b border-outline-variant shadow-sm fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-4">
+<span class="text-xl font-headline font-black text-primary-container tracking-tight">RailOpt AI</span>
+<div class="hidden md:flex items-center ml-8 relative text-on-surface-variant hover:text-primary-container transition-colors focus-within:text-primary-container">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] pointer-events-none">search</span>
+<input class="bg-surface-variant border-none rounded-full py-1.5 pl-10 pr-4 text-sm font-medium focus:ring-1 focus:ring-primary-container outline-none w-64 placeholder-on-surface-variant/50 transition-all" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-variant transition-colors cursor-pointer active:scale-95 text-on-surface-variant hover:text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-variant transition-colors cursor-pointer active:scale-95 text-on-surface-variant hover:text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<button class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant hover:border-primary-container transition-colors cursor-pointer active:scale-95 focus:ring-2 focus:ring-primary-container focus:outline-none">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A detailed headshot photograph of a professional railway engineer looking confident in soft, dramatic studio lighting with a deep charcoal background, emphasizing a high-tech modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA30HLuqeSiSYnHA1zlO0P21GVcPMDVU3GBiMeafecGmUEJMfveir4lkW-QXvC_N3ozoTYHfRPGWBlaWFj5VU9t1xMv7UibJaOkNHclASbs2sfefsnoT9KFix41T0RhPABl6tBwAHDWxYvM5GtBhsplmi9h7gDQ0N4LYBktM7AFmwhp7XX-YpKFmmnNO7KrSRFk8tCFf-b5now7OCeo7IJOnkkqoKG5ZAhsC2ScnjrQbIBwqjUnMHUDcZ3xywd4dHd0w64qaP_x9yJW"/>
+</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container font-body text-sm font-medium border-r border-outline-variant shadow-md fixed left-0 top-16 h-[calc(100vh-64px)] flex flex-col p-4 z-40 w-64 hidden md:flex">
+<div class="mb-8 px-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center border border-outline-variant">
+<img alt="System Status" class="w-full h-full object-cover rounded-lg" data-alt="A clean, minimalist 3D icon of an industrial status monitor glowing subtly in cyan and teal against a dark slate background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1tFxJs7MvGooakzaT6FAByx6r991Nbrp1AdJTu16bXJb46q0syGrmoN2vOx2BznUMA55aHLYkZIcKGNS1AJz17xSl1tzJ5gzao9esWw1xTmlLFz3aC_5W_y6P_XlVEx0oR2NX0Cg-G3_ElpOZ0OZwjIjj71AXK3cFEUGrYzXS2Yj6pJyz8w5v1oggsfhogdUEalQkeOljatMyKgx4ap0B5f-kybyKdG75ztkh5kVKrmhwc75RWwF_95DREgh03ZwrWW2zqGk71cWc"/>
+</div>
+<div>
+<h2 class="text-on-surface font-headline font-bold leading-tight">Operations</h2>
+<p class="text-xs text-on-surface-variant">Active Session</p>
+</div>
+</div>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<li>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all cursor-pointer active:translate-x-1" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2.5 bg-secondary-container text-on-secondary-container rounded-lg font-bold cursor-pointer active:translate-x-1" href="#">
+<span class="material-symbols-outlined text-[20px]">engineering</span>
+<span>Maintenance</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all cursor-pointer active:translate-x-1" href="#">
+<span class="material-symbols-outlined text-[20px]">history_edu</span>
+<span>Logs</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all cursor-pointer active:translate-x-1" href="#">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+<span>Network</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto pt-6 border-t border-outline-variant flex flex-col gap-4">
+<button class="w-full bg-primary-container text-on-primary-container font-headline font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-primary transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary-container">
+<span class="material-symbols-outlined text-[18px]">add</span>
+        New Request
+      </button>
+<ul class="flex flex-col gap-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span>Security</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[16px]">help</span>
+<span>Support</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="md:ml-64 mt-16 p-6 h-[calc(100vh-64px)] overflow-y-auto bg-background">
+<div class="max-w-7xl mx-auto space-y-6">
+<!-- Page Header -->
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-2xl font-headline font-bold text-on-surface">Submit Maintenance Request</h1>
+<p class="text-sm text-on-surface-variant mt-1">Log defect telemetry and schedule track resources.</p>
+</div>
+</div>
+<!-- Main Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Form Section (Bento Card) -->
+<div class="lg:col-span-1 bg-surface-container rounded-xl border border-outline-variant p-6 shadow-sm flex flex-col gap-6 relative overflow-hidden">
+<!-- Subtle background glow -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<h2 class="text-lg font-headline font-bold text-on-surface flex items-center gap-2 border-b border-outline-variant pb-3">
+<span class="material-symbols-outlined text-primary-container">edit_document</span>
+            Request Details
+          </h2>
+<form class="flex flex-col gap-5 flex-grow">
+<!-- Defect Type -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label text-on-surface-variant tracking-wider uppercase">Defect Type</label>
+<div class="relative">
+<select class="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary-container focus:border-primary-container appearance-none outline-none transition-colors cursor-pointer">
+<option>Track Defect</option>
+<option>Signal Fault</option>
+<option>Traction Fault</option>
+<option>OHE Issue</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<!-- Corridor Section -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label text-on-surface-variant tracking-wider uppercase">Corridor Section</label>
+<div class="relative">
+<select class="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary-container focus:border-primary-container appearance-none outline-none transition-colors cursor-pointer">
+<option>NDLS-GZB</option>
+<option>CSMT-KYN</option>
+<option>MAS-AJJ</option>
+<option>HWH-BWN</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<!-- Asset ID -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label text-on-surface-variant tracking-wider uppercase">Asset ID</label>
+<input class="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-sm text-on-surface font-mono focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-colors placeholder-on-surface-variant/50" placeholder="e.g. TRK-492-X" type="text"/>
+</div>
+<!-- Urgency -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label text-on-surface-variant tracking-wider uppercase">Urgency / Criticality</label>
+<div class="flex bg-surface-variant p-1 rounded-lg border border-outline-variant">
+<label class="flex-1 text-center cursor-pointer">
+<input checked="" class="peer hidden" name="urgency" type="radio"/>
+<div class="py-1.5 rounded-md text-xs font-medium text-on-surface-variant peer-checked:bg-surface-container peer-checked:text-on-surface peer-checked:shadow-sm transition-all border border-transparent peer-checked:border-outline-variant">Low</div>
+</label>
+<label class="flex-1 text-center cursor-pointer">
+<input class="peer hidden" name="urgency" type="radio"/>
+<div class="py-1.5 rounded-md text-xs font-medium text-on-surface-variant peer-checked:bg-surface-container peer-checked:text-amber-400 peer-checked:shadow-sm transition-all border border-transparent peer-checked:border-outline-variant">Medium</div>
+</label>
+<label class="flex-1 text-center cursor-pointer">
+<input class="peer hidden" name="urgency" type="radio"/>
+<div class="py-1.5 rounded-md text-xs font-medium text-on-surface-variant peer-checked:bg-surface-container peer-checked:text-error peer-checked:shadow-sm transition-all border border-transparent peer-checked:border-outline-variant">High</div>
+</label>
+</div>
+</div>
+<!-- Time Window -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="block text-xs font-label text-on-surface-variant tracking-wider uppercase">Start Window</label>
+<div class="relative">
+<input class="w-full bg-surface-variant border border-outline-variant rounded-lg pl-3 pr-1 py-2 text-xs text-on-surface focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-colors [color-scheme:dark]" type="datetime-local"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-label text-on-surface-variant tracking-wider uppercase">End Window</label>
+<div class="relative">
+<input class="w-full bg-surface-variant border border-outline-variant rounded-lg pl-3 pr-1 py-2 text-xs text-on-surface focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-colors [color-scheme:dark]" type="datetime-local"/>
+</div>
+</div>
+</div>
+<!-- CTA -->
+<div class="mt-auto pt-4 border-t border-outline-variant">
+<button class="w-full group bg-primary-container text-on-primary-container font-headline font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary-container shadow-[0_0_15px_rgba(0,229,255,0.2)] hover:shadow-[0_0_20px_rgba(0,229,255,0.4)]" type="button">
+                Submit Maintenance Request
+                <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Table Section (Bento Card) -->
+<div class="lg:col-span-2 bg-surface-container rounded-xl border border-outline-variant shadow-sm flex flex-col overflow-hidden">
+<!-- Table Header / Controls -->
+<div class="p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-high/50">
+<h2 class="text-lg font-headline font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">table_rows</span>
+              My Department Requests
+            </h2>
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<!-- Filter Pills -->
+<div class="flex bg-surface-variant rounded-lg p-0.5 border border-outline-variant">
+<button class="px-3 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface shadow-sm border border-outline-variant">All</button>
+<button class="px-3 py-1 rounded-md text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors">Pending</button>
+<button class="px-3 py-1 rounded-md text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors">Scheduled</button>
+</div>
+<!-- Mini Search -->
+<div class="relative flex-grow sm:flex-grow-0">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">search</span>
+<input class="w-full sm:w-40 bg-surface-variant border border-outline-variant rounded-lg py-1.5 pl-8 pr-3 text-xs text-on-surface focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-colors placeholder-on-surface-variant/50" placeholder="Filter ID..." type="text"/>
+</div>
+</div>
+</div>
+<!-- Table Content -->
+<div class="overflow-x-auto flex-grow">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant">
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold">Request ID</th>
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold">Section</th>
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold">Defect Type</th>
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold">Requested Window</th>
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold text-center">Overdue</th>
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold text-center">Risk</th>
+<th class="py-3 px-5 text-xs font-label text-on-surface-variant tracking-wider uppercase font-semibold text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/50 text-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="py-3 px-5 font-mono text-primary-container text-xs">#REQ-0923</td>
+<td class="py-3 px-5 text-on-surface">NDLS-GZB</td>
+<td class="py-3 px-5 text-on-surface-variant">Track Defect</td>
+<td class="py-3 px-5 text-on-surface-variant font-mono text-xs">Oct 24, 02:00-06:00</td>
+<td class="py-3 px-5 text-center font-mono text-error">2</td>
+<td class="py-3 px-5 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-error/10 text-error font-mono font-bold text-xs border border-error/20">85</span>
+</td>
+<td class="py-3 px-5 text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-variant border border-outline-variant text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      Pending
+                    </span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="py-3 px-5 font-mono text-primary-container text-xs">#REQ-0922</td>
+<td class="py-3 px-5 text-on-surface">CSMT-KYN</td>
+<td class="py-3 px-5 text-on-surface-variant">Signal Fault</td>
+<td class="py-3 px-5 text-on-surface-variant font-mono text-xs">Oct 25, 10:00-14:00</td>
+<td class="py-3 px-5 text-center font-mono text-on-surface-variant">-</td>
+<td class="py-3 px-5 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 font-mono font-bold text-xs border border-amber-400/20">62</span>
+</td>
+<td class="py-3 px-5 text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-variant border border-outline-variant text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                      Scored
+                    </span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="py-3 px-5 font-mono text-primary-container text-xs">#REQ-0918</td>
+<td class="py-3 px-5 text-on-surface">MAS-AJJ</td>
+<td class="py-3 px-5 text-on-surface-variant">OHE Issue</td>
+<td class="py-3 px-5 text-on-surface-variant font-mono text-xs">Oct 22, 00:00-04:00</td>
+<td class="py-3 px-5 text-center font-mono text-on-surface-variant">-</td>
+<td class="py-3 px-5 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/20">24</span>
+</td>
+<td class="py-3 px-5 text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      Scheduled
+                    </span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="py-3 px-5 font-mono text-primary-container text-xs">#REQ-0915</td>
+<td class="py-3 px-5 text-on-surface">HWH-BWN</td>
+<td class="py-3 px-5 text-on-surface-variant">Traction Fault</td>
+<td class="py-3 px-5 text-on-surface-variant font-mono text-xs">Oct 26, 22:00-02:00</td>
+<td class="py-3 px-5 text-center font-mono text-on-surface-variant">-</td>
+<td class="py-3 px-5 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-violet-500/10 text-violet-400 font-mono font-bold text-xs border border-violet-500/20">45</span>
+</td>
+<td class="py-3 px-5 text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-variant border border-outline-variant text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+                      Proposed
+                    </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="p-4 border-t border-outline-variant flex items-center justify-between text-xs text-on-surface-variant bg-surface-container-highest/30">
+<span>Showing 4 of 24 requests</span>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-surface-variant transition-colors disabled:opacity-50"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 rounded hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

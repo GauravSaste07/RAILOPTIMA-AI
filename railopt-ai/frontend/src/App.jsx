@@ -1,0 +1,107 @@
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ProtectedRoute, AdminRoute } from './components/RouteProtection';
+import Layout from './components/Layout';
+
+import Login from './pages/Login';
+import SubmitRequest from './pages/SubmitRequest';
+import RiskQueue from './pages/RiskQueue';
+import BlockOptimization from './pages/BlockOptimization';
+import AdminApproval from './pages/AdminApproval';
+import BlockCalendar from './pages/BlockCalendar';
+import Reports from './pages/Reports';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('[RailOpt ErrorBoundary caught]:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#070e10] flex flex-col items-center justify-center p-6 text-center text-[#dce4e5]">
+          <div className="bg-[#121c1f] border border-red-500/40 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center mx-auto text-red-400 text-xl font-bold">
+              ⚠️
+            </div>
+            <h2 className="text-base font-bold text-white tracking-wide">Component Rendering Alert</h2>
+            <p className="text-xs text-[#869294] font-mono leading-relaxed">
+              {this.state.error?.message || 'A temporary interface error occurred.'}
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
+              className="px-4 py-2 rounded-lg bg-[#00e5ff] text-[#002026] text-xs font-bold font-mono hover:bg-[#38bdf8] transition-all"
+            >
+              Refresh Interface
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function RootRedirect() {
+  const { isAuthenticated, role, loading } = useAuth();
+  if (loading) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (role === 'admin') return <Navigate to="/risk-queue" replace />;
+  return <Navigate to="/submit-request" replace />;
+}
+
+export default function App() {
+  useEffect(() => {
+    fetch('http://localhost:8000/health')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('[ML Service Health Check Response]:', data);
+      })
+      .catch((err) => {
+        console.error('[ML Service Health Check Error]:', err);
+      });
+  }, []);
+  return (
+    <AuthProvider>
+      <ErrorBoundary>
+        <Routes>
+          {/* Public Login Route */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Root Redirect based on auth/role */}
+          <Route path="/" element={<RootRedirect />} />
+
+          {/* Authenticated Routes with Shared Layout */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              {/* Department + Admin shared routes */}
+              <Route path="/submit-request" element={<SubmitRequest />} />
+              <Route path="/calendar" element={<BlockCalendar />} />
+
+              {/* Admin-only Protected Routes */}
+              <Route element={<AdminRoute />}>
+                <Route path="/risk-queue" element={<RiskQueue />} />
+                <Route path="/block-optimization" element={<BlockOptimization />} />
+                <Route path="/admin-approval" element={<AdminApproval />} />
+                <Route path="/reports" element={<Reports />} />
+              </Route>
+            </Route>
+          </Route>
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ErrorBoundary>
+    </AuthProvider>
+  );
+}

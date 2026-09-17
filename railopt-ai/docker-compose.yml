@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: railopt-ml-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./ml-service/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: railopt-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./frontend/.env
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      ml-service:
+        condition: service_healthy
+
+networks:
+  default:
+    name: railopt-network

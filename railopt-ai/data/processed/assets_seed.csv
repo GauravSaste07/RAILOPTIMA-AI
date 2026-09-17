@@ -1,0 +1,181 @@
+asset_id,department,section_id,type,criticality,installation_year,last_inspection_date,failure_count_last_year,cumulative_mgt_approx
+AST-ENG-001,Engineering,NDLS-GZB,Track Segment,0.76,2024,2026-08-08,1,43.2
+AST-ENG-002,Engineering,NDLS-GZB,Turnout Switch,0.82,2014,2026-08-19,6,259.2
+AST-ENG-003,Engineering,NDLS-GZB,Bridge Structure,0.86,2019,2026-08-23,1,151.2
+AST-ENG-004,Engineering,NDLS-GZB,Level Crossing Track,0.61,2017,2026-07-24,5,194.4
+AST-SNT-005,Signal & Telecom,NDLS-GZB,Electronic Interlocking,0.9,2022,2026-07-22,3,86.4
+AST-SNT-006,Signal & Telecom,NDLS-GZB,Point Machine,0.82,2016,2026-08-08,2,216.0
+AST-SNT-007,Signal & Telecom,NDLS-GZB,Digital Axle Counter,0.83,2019,2026-07-29,3,151.2
+AST-SNT-008,Signal & Telecom,NDLS-GZB,Track Circuit,0.68,2018,2026-08-04,1,172.8
+AST-TRD-009,Traction Distribution,NDLS-GZB,OHE Catenary Wire,0.81,2024,2026-05-12,2,43.2
+AST-TRD-010,Traction Distribution,NDLS-GZB,Traction Substation,0.96,2013,2026-06-21,5,280.8
+AST-TRD-011,Traction Distribution,NDLS-GZB,Section Insulator,0.75,2012,2026-06-16,6,302.4
+AST-TRD-012,Traction Distribution,NDLS-GZB,Cantilever Assembly,0.68,2004,2026-04-08,6,475.2
+AST-ENG-013,Engineering,CSMT-KYN,Track Segment,0.76,2002,2026-08-21,4,547.2
+AST-ENG-014,Engineering,CSMT-KYN,Turnout Switch,0.87,2013,2026-08-07,2,296.4
+AST-ENG-015,Engineering,CSMT-KYN,Bridge Structure,0.94,2012,2026-08-19,5,319.2
+AST-ENG-016,Engineering,CSMT-KYN,Level Crossing Track,0.63,2004,2026-08-02,5,501.6
+AST-SNT-017,Signal & Telecom,CSMT-KYN,Electronic Interlocking,0.94,2022,2026-08-08,0,91.2
+AST-SNT-018,Signal & Telecom,CSMT-KYN,Point Machine,0.86,2023,2026-07-22,1,68.4
+AST-SNT-019,Signal & Telecom,CSMT-KYN,Digital Axle Counter,0.77,2012,2026-08-08,6,319.2
+AST-SNT-020,Signal & Telecom,CSMT-KYN,Track Circuit,0.67,2014,2026-08-22,3,273.6
+AST-TRD-021,Traction Distribution,CSMT-KYN,OHE Catenary Wire,0.88,2013,2026-05-17,5,296.4
+AST-TRD-022,Traction Distribution,CSMT-KYN,Traction Substation,0.93,2022,2026-04-15,2,91.2
+AST-TRD-023,Traction Distribution,CSMT-KYN,Section Insulator,0.72,2009,2026-05-07,6,387.6
+AST-TRD-024,Traction Distribution,CSMT-KYN,Cantilever Assembly,0.66,2020,2026-05-26,5,136.8
+AST-ENG-025,Engineering,HWH-BWN,Track Segment,0.75,2001,2026-07-29,9,510.0
+AST-ENG-026,Engineering,HWH-BWN,Turnout Switch,0.84,2022,2026-08-17,4,81.6
+AST-ENG-027,Engineering,HWH-BWN,Bridge Structure,0.9,2013,2026-08-22,2,265.2
+AST-ENG-028,Engineering,HWH-BWN,Level Crossing Track,0.62,2019,2026-07-29,5,142.8
+AST-SNT-029,Signal & Telecom,HWH-BWN,Electronic Interlocking,0.91,2019,2026-07-27,5,142.8
+AST-SNT-030,Signal & Telecom,HWH-BWN,Point Machine,0.83,2017,2026-08-25,1,183.6
+AST-SNT-031,Signal & Telecom,HWH-BWN,Digital Axle Counter,0.82,2007,2026-08-08,5,387.6
+AST-SNT-032,Signal & Telecom,HWH-BWN,Track Circuit,0.66,2011,2026-08-15,6,306.0
+AST-TRD-033,Traction Distribution,HWH-BWN,OHE Catenary Wire,0.8,2014,2026-05-24,6,244.8
+AST-TRD-034,Traction Distribution,HWH-BWN,Traction Substation,0.98,2017,2026-06-13,3,183.6
+AST-TRD-035,Traction Distribution,HWH-BWN,Section Insulator,0.78,2008,2026-04-10,4,367.2
+AST-TRD-036,Traction Distribution,HWH-BWN,Cantilever Assembly,0.67,2019,2026-04-18,5,142.8
+AST-ENG-037,Engineering,SBC-JTJ,Track Segment,0.79,2005,2026-08-05,7,252.0
+AST-ENG-038,Engineering,SBC-JTJ,Turnout Switch,0.8,2011,2026-08-02,5,180.0
+AST-ENG-039,Engineering,SBC-JTJ,Bridge Structure,0.87,2022,2026-08-20,0,48.0
+AST-ENG-040,Engineering,SBC-JTJ,Level Crossing Track,0.67,2022,2026-07-22,1,48.0
+AST-SNT-041,Signal & Telecom,SBC-JTJ,Electronic Interlocking,0.91,2018,2026-08-15,3,96.0
+AST-SNT-042,Signal & Telecom,SBC-JTJ,Point Machine,0.85,2016,2026-07-29,3,120.0
+AST-SNT-043,Signal & Telecom,SBC-JTJ,Digital Axle Counter,0.84,2001,2026-08-13,7,300.0
+AST-SNT-044,Signal & Telecom,SBC-JTJ,Track Circuit,0.69,2003,2026-08-02,7,276.0
+AST-TRD-045,Traction Distribution,SBC-JTJ,OHE Catenary Wire,0.89,2018,2026-06-11,2,96.0
+AST-TRD-046,Traction Distribution,SBC-JTJ,Traction Substation,0.92,2020,2026-06-24,5,72.0
+AST-TRD-047,Traction Distribution,SBC-JTJ,Section Insulator,0.76,2006,2026-05-29,4,240.0
+AST-TRD-048,Traction Distribution,SBC-JTJ,Cantilever Assembly,0.66,2004,2026-06-19,5,264.0
+AST-ENG-049,Engineering,MAS-AJJ,Track Segment,0.71,2023,2026-08-04,0,50.4
+AST-ENG-050,Engineering,MAS-AJJ,Turnout Switch,0.85,2021,2026-07-25,2,84.0
+AST-ENG-051,Engineering,MAS-AJJ,Bridge Structure,0.9,2014,2026-07-26,3,201.6
+AST-ENG-052,Engineering,MAS-AJJ,Level Crossing Track,0.68,2011,2026-08-13,3,252.0
+AST-SNT-053,Signal & Telecom,MAS-AJJ,Electronic Interlocking,0.91,2019,2026-08-03,4,117.6
+AST-SNT-054,Signal & Telecom,MAS-AJJ,Point Machine,0.84,2012,2026-08-22,2,235.2
+AST-SNT-055,Signal & Telecom,MAS-AJJ,Digital Axle Counter,0.76,2001,2026-08-04,5,420.0
+AST-SNT-056,Signal & Telecom,MAS-AJJ,Track Circuit,0.67,2018,2026-07-22,4,134.4
+AST-TRD-057,Traction Distribution,MAS-AJJ,OHE Catenary Wire,0.81,2023,2026-05-22,3,50.4
+AST-TRD-058,Traction Distribution,MAS-AJJ,Traction Substation,0.92,2011,2026-06-17,6,252.0
+AST-TRD-059,Traction Distribution,MAS-AJJ,Section Insulator,0.78,2007,2026-06-14,3,319.2
+AST-TRD-060,Traction Distribution,MAS-AJJ,Cantilever Assembly,0.72,2007,2026-06-25,3,319.2
+AST-ENG-061,Engineering,PUNE-DD,Track Segment,0.79,2017,2026-08-15,4,118.8
+AST-ENG-062,Engineering,PUNE-DD,Turnout Switch,0.85,2022,2026-07-31,0,52.8
+AST-ENG-063,Engineering,PUNE-DD,Bridge Structure,0.87,2025,2026-08-01,2,13.2
+AST-ENG-064,Engineering,PUNE-DD,Level Crossing Track,0.69,2010,2026-08-07,6,211.2
+AST-SNT-065,Signal & Telecom,PUNE-DD,Electronic Interlocking,0.97,2014,2026-07-25,3,158.4
+AST-SNT-066,Signal & Telecom,PUNE-DD,Point Machine,0.82,2022,2026-08-22,4,52.8
+AST-SNT-067,Signal & Telecom,PUNE-DD,Digital Axle Counter,0.82,2023,2026-08-05,0,39.6
+AST-SNT-068,Signal & Telecom,PUNE-DD,Track Circuit,0.66,2009,2026-07-24,7,224.4
+AST-TRD-069,Traction Distribution,PUNE-DD,OHE Catenary Wire,0.82,2017,2026-06-16,2,118.8
+AST-TRD-070,Traction Distribution,PUNE-DD,Traction Substation,0.91,2024,2026-05-27,3,26.4
+AST-TRD-071,Traction Distribution,PUNE-DD,Section Insulator,0.71,2006,2026-05-26,8,264.0
+AST-TRD-072,Traction Distribution,PUNE-DD,Cantilever Assembly,0.71,2005,2026-06-16,7,277.2
+AST-ENG-073,Engineering,ADI-BRC,Track Segment,0.77,2006,2026-07-23,6,312.0
+AST-ENG-074,Engineering,ADI-BRC,Turnout Switch,0.89,2022,2026-08-05,1,62.4
+AST-ENG-075,Engineering,ADI-BRC,Bridge Structure,0.88,2023,2026-08-06,3,46.8
+AST-ENG-076,Engineering,ADI-BRC,Level Crossing Track,0.63,2022,2026-08-25,3,62.4
+AST-SNT-077,Signal & Telecom,ADI-BRC,Electronic Interlocking,0.96,2016,2026-08-19,2,156.0
+AST-SNT-078,Signal & Telecom,ADI-BRC,Point Machine,0.85,2017,2026-08-09,2,140.4
+AST-SNT-079,Signal & Telecom,ADI-BRC,Digital Axle Counter,0.84,2022,2026-08-10,2,62.4
+AST-SNT-080,Signal & Telecom,ADI-BRC,Track Circuit,0.68,2010,2026-07-22,5,249.6
+AST-TRD-081,Traction Distribution,ADI-BRC,OHE Catenary Wire,0.86,2013,2026-04-20,2,202.8
+AST-TRD-082,Traction Distribution,ADI-BRC,Traction Substation,0.97,2017,2026-05-19,1,140.4
+AST-TRD-083,Traction Distribution,ADI-BRC,Section Insulator,0.79,2020,2026-05-24,1,93.6
+AST-TRD-084,Traction Distribution,ADI-BRC,Cantilever Assembly,0.74,2001,2026-04-17,6,390.0
+AST-ENG-085,Engineering,LKO-CNB,Track Segment,0.73,2005,2026-08-12,6,277.2
+AST-ENG-086,Engineering,LKO-CNB,Turnout Switch,0.82,2015,2026-08-09,6,145.2
+AST-ENG-087,Engineering,LKO-CNB,Bridge Structure,0.9,2011,2026-08-22,3,198.0
+AST-ENG-088,Engineering,LKO-CNB,Level Crossing Track,0.66,2016,2026-08-23,2,132.0
+AST-SNT-089,Signal & Telecom,LKO-CNB,Electronic Interlocking,0.93,2023,2026-08-09,1,39.6
+AST-SNT-090,Signal & Telecom,LKO-CNB,Point Machine,0.87,2017,2026-07-29,5,118.8
+AST-SNT-091,Signal & Telecom,LKO-CNB,Digital Axle Counter,0.75,2022,2026-08-16,4,52.8
+AST-SNT-092,Signal & Telecom,LKO-CNB,Track Circuit,0.65,2013,2026-08-16,5,171.6
+AST-TRD-093,Traction Distribution,LKO-CNB,OHE Catenary Wire,0.81,2021,2026-05-11,1,66.0
+AST-TRD-094,Traction Distribution,LKO-CNB,Traction Substation,0.99,2022,2026-05-26,0,52.8
+AST-TRD-095,Traction Distribution,LKO-CNB,Section Insulator,0.74,2007,2026-05-05,7,250.8
+AST-TRD-096,Traction Distribution,LKO-CNB,Cantilever Assembly,0.72,2017,2026-06-06,2,118.8
+AST-ENG-097,Engineering,BPL-ET,Track Segment,0.79,2024,2026-08-14,2,28.8
+AST-ENG-098,Engineering,BPL-ET,Turnout Switch,0.88,2019,2026-08-10,3,100.8
+AST-ENG-099,Engineering,BPL-ET,Bridge Structure,0.87,2014,2026-08-19,5,172.8
+AST-ENG-100,Engineering,BPL-ET,Level Crossing Track,0.69,2009,2026-08-11,4,244.8
+AST-SNT-101,Signal & Telecom,BPL-ET,Electronic Interlocking,0.98,2018,2026-08-03,3,115.2
+AST-SNT-102,Signal & Telecom,BPL-ET,Point Machine,0.88,2012,2026-08-11,3,201.6
+AST-SNT-103,Signal & Telecom,BPL-ET,Digital Axle Counter,0.75,2018,2026-07-31,3,115.2
+AST-SNT-104,Signal & Telecom,BPL-ET,Track Circuit,0.68,2022,2026-08-08,2,57.6
+AST-TRD-105,Traction Distribution,BPL-ET,OHE Catenary Wire,0.86,2019,2026-04-19,3,100.8
+AST-TRD-106,Traction Distribution,BPL-ET,Traction Substation,0.99,2024,2026-05-24,1,28.8
+AST-TRD-107,Traction Distribution,BPL-ET,Section Insulator,0.76,2016,2026-06-22,2,144.0
+AST-TRD-108,Traction Distribution,BPL-ET,Cantilever Assembly,0.71,2013,2026-05-17,5,187.2
+AST-ENG-109,Engineering,JP-AII,Track Segment,0.76,2008,2026-08-18,6,183.6
+AST-ENG-110,Engineering,JP-AII,Turnout Switch,0.89,2022,2026-08-09,0,40.8
+AST-ENG-111,Engineering,JP-AII,Bridge Structure,0.92,2025,2026-07-23,4,10.2
+AST-ENG-112,Engineering,JP-AII,Level Crossing Track,0.67,2001,2026-08-13,7,255.0
+AST-SNT-113,Signal & Telecom,JP-AII,Electronic Interlocking,0.94,2015,2026-08-04,6,112.2
+AST-SNT-114,Signal & Telecom,JP-AII,Point Machine,0.83,2012,2026-08-18,4,142.8
+AST-SNT-115,Signal & Telecom,JP-AII,Digital Axle Counter,0.8,2003,2026-07-30,6,234.6
+AST-SNT-116,Signal & Telecom,JP-AII,Track Circuit,0.69,2015,2026-08-17,3,112.2
+AST-TRD-117,Traction Distribution,JP-AII,OHE Catenary Wire,0.84,2019,2026-06-04,5,71.4
+AST-TRD-118,Traction Distribution,JP-AII,Traction Substation,0.96,2019,2026-04-17,1,71.4
+AST-TRD-119,Traction Distribution,JP-AII,Section Insulator,0.73,2018,2026-05-02,5,81.6
+AST-TRD-120,Traction Distribution,JP-AII,Cantilever Assembly,0.71,2014,2026-04-28,5,122.4
+AST-ENG-121,Engineering,ALD-MGS,Track Segment,0.74,2018,2026-07-24,4,144.0
+AST-ENG-122,Engineering,ALD-MGS,Turnout Switch,0.88,2013,2026-08-15,2,234.0
+AST-ENG-123,Engineering,ALD-MGS,Bridge Structure,0.88,2015,2026-08-04,2,198.0
+AST-ENG-124,Engineering,ALD-MGS,Level Crossing Track,0.68,2017,2026-08-06,2,162.0
+AST-SNT-125,Signal & Telecom,ALD-MGS,Electronic Interlocking,0.98,2023,2026-08-24,0,54.0
+AST-SNT-126,Signal & Telecom,ALD-MGS,Point Machine,0.82,2018,2026-08-21,4,144.0
+AST-SNT-127,Signal & Telecom,ALD-MGS,Digital Axle Counter,0.79,2004,2026-08-13,7,396.0
+AST-SNT-128,Signal & Telecom,ALD-MGS,Track Circuit,0.7,2017,2026-08-16,1,162.0
+AST-TRD-129,Traction Distribution,ALD-MGS,OHE Catenary Wire,0.89,2012,2026-06-13,5,252.0
+AST-TRD-130,Traction Distribution,ALD-MGS,Traction Substation,0.92,2013,2026-04-21,5,234.0
+AST-TRD-131,Traction Distribution,ALD-MGS,Section Insulator,0.71,2017,2026-06-11,4,162.0
+AST-TRD-132,Traction Distribution,ALD-MGS,Cantilever Assembly,0.66,2010,2026-04-20,7,288.0
+AST-ENG-133,Engineering,GHY-NJP,Track Segment,0.76,2010,2026-07-24,6,144.0
+AST-ENG-134,Engineering,GHY-NJP,Turnout Switch,0.88,2017,2026-07-28,2,81.0
+AST-ENG-135,Engineering,GHY-NJP,Bridge Structure,0.92,2018,2026-07-28,3,72.0
+AST-ENG-136,Engineering,GHY-NJP,Level Crossing Track,0.68,2004,2026-08-08,8,198.0
+AST-SNT-137,Signal & Telecom,GHY-NJP,Electronic Interlocking,0.95,2022,2026-08-08,3,36.0
+AST-SNT-138,Signal & Telecom,GHY-NJP,Point Machine,0.81,2021,2026-08-10,3,45.0
+AST-SNT-139,Signal & Telecom,GHY-NJP,Digital Axle Counter,0.78,2007,2026-08-20,4,171.0
+AST-SNT-140,Signal & Telecom,GHY-NJP,Track Circuit,0.67,2012,2026-08-16,3,126.0
+AST-TRD-141,Traction Distribution,GHY-NJP,OHE Catenary Wire,0.81,2019,2026-05-15,5,63.0
+AST-TRD-142,Traction Distribution,GHY-NJP,Traction Substation,0.95,2025,2026-05-31,3,9.0
+AST-TRD-143,Traction Distribution,GHY-NJP,Section Insulator,0.74,2006,2026-06-24,8,180.0
+AST-TRD-144,Traction Distribution,GHY-NJP,Cantilever Assembly,0.69,2024,2026-05-12,2,18.0
+AST-ENG-145,Engineering,TVC-QLN,Track Segment,0.78,2011,2026-07-22,7,153.0
+AST-ENG-146,Engineering,TVC-QLN,Turnout Switch,0.88,2011,2026-08-11,6,153.0
+AST-ENG-147,Engineering,TVC-QLN,Bridge Structure,0.87,2019,2026-07-25,1,71.4
+AST-ENG-148,Engineering,TVC-QLN,Level Crossing Track,0.64,2003,2026-07-31,5,234.6
+AST-SNT-149,Signal & Telecom,TVC-QLN,Electronic Interlocking,0.98,2011,2026-08-17,7,153.0
+AST-SNT-150,Signal & Telecom,TVC-QLN,Point Machine,0.85,2011,2026-07-31,7,153.0
+AST-SNT-151,Signal & Telecom,TVC-QLN,Digital Axle Counter,0.81,2024,2026-08-20,3,20.4
+AST-SNT-152,Signal & Telecom,TVC-QLN,Track Circuit,0.66,2010,2026-08-14,3,163.2
+AST-TRD-153,Traction Distribution,TVC-QLN,OHE Catenary Wire,0.83,2020,2026-05-30,4,61.2
+AST-TRD-154,Traction Distribution,TVC-QLN,Traction Substation,0.93,2013,2026-05-09,4,132.6
+AST-TRD-155,Traction Distribution,TVC-QLN,Section Insulator,0.78,2011,2026-05-25,3,153.0
+AST-TRD-156,Traction Distribution,TVC-QLN,Cantilever Assembly,0.7,2001,2026-04-18,5,255.0
+AST-ENG-157,Engineering,BZA-VSKP,Track Segment,0.8,2013,2026-08-11,2,187.2
+AST-ENG-158,Engineering,BZA-VSKP,Turnout Switch,0.88,2015,2026-08-23,2,158.4
+AST-ENG-159,Engineering,BZA-VSKP,Bridge Structure,0.94,2022,2026-08-24,4,57.6
+AST-ENG-160,Engineering,BZA-VSKP,Level Crossing Track,0.62,2020,2026-07-26,1,86.4
+AST-SNT-161,Signal & Telecom,BZA-VSKP,Electronic Interlocking,0.96,2022,2026-07-27,2,57.6
+AST-SNT-162,Signal & Telecom,BZA-VSKP,Point Machine,0.88,2023,2026-08-18,1,43.2
+AST-SNT-163,Signal & Telecom,BZA-VSKP,Digital Axle Counter,0.85,2021,2026-08-24,3,72.0
+AST-SNT-164,Signal & Telecom,BZA-VSKP,Track Circuit,0.71,2012,2026-07-31,3,201.6
+AST-TRD-165,Traction Distribution,BZA-VSKP,OHE Catenary Wire,0.81,2014,2026-04-07,3,172.8
+AST-TRD-166,Traction Distribution,BZA-VSKP,Traction Substation,0.91,2013,2026-05-19,6,187.2
+AST-TRD-167,Traction Distribution,BZA-VSKP,Section Insulator,0.78,2006,2026-06-21,6,288.0
+AST-TRD-168,Traction Distribution,BZA-VSKP,Cantilever Assembly,0.7,2003,2026-05-10,4,331.2
+AST-ENG-169,Engineering,NGP-BSL,Track Segment,0.75,2014,2026-08-25,5,144.0
+AST-ENG-170,Engineering,NGP-BSL,Turnout Switch,0.88,2024,2026-07-29,2,24.0
+AST-ENG-171,Engineering,NGP-BSL,Bridge Structure,0.91,2012,2026-07-27,3,168.0
+AST-ENG-172,Engineering,NGP-BSL,Level Crossing Track,0.64,2001,2026-07-23,7,300.0
+AST-SNT-173,Signal & Telecom,NGP-BSL,Electronic Interlocking,0.96,2011,2026-07-22,6,180.0
+AST-SNT-174,Signal & Telecom,NGP-BSL,Point Machine,0.85,2012,2026-08-08,4,168.0
+AST-SNT-175,Signal & Telecom,NGP-BSL,Digital Axle Counter,0.84,2022,2026-08-08,3,48.0
+AST-SNT-176,Signal & Telecom,NGP-BSL,Track Circuit,0.67,2010,2026-08-01,5,192.0
+AST-TRD-177,Traction Distribution,NGP-BSL,OHE Catenary Wire,0.8,2012,2026-05-16,3,168.0
+AST-TRD-178,Traction Distribution,NGP-BSL,Traction Substation,0.95,2020,2026-05-24,3,72.0
+AST-TRD-179,Traction Distribution,NGP-BSL,Section Insulator,0.73,2005,2026-05-22,8,252.0
+AST-TRD-180,Traction Distribution,NGP-BSL,Cantilever Assembly,0.65,2018,2026-06-16,2,96.0
