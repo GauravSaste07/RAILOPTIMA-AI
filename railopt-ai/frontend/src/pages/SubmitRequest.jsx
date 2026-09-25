@@ -27,6 +27,7 @@ const DEPARTMENT_DEFECT_OPTIONS = {
     { label: 'Expansion Bearing Defect', value: 'track_defect', targetType: 'Bridge Structure', defaultUrgency: 'Emergency' },
     { label: 'Track Creep', value: 'track_defect', targetType: 'Track Segment', defaultUrgency: 'Normal' },
     { label: 'LWR Breathing Joint Gap Defect', value: 'track_defect', targetType: 'Track Segment', defaultUrgency: 'Normal' },
+    { label: 'Other / Custom Defect (Describe Below)', value: 'other_defect', targetType: '', defaultUrgency: 'Normal' },
   ],
   'Signal & Telecom': [
     { label: 'Signal Aspect Blown', value: 'signal_fault', targetType: 'Electronic Interlocking', defaultUrgency: 'Emergency' },
@@ -44,6 +45,7 @@ const DEPARTMENT_DEFECT_OPTIONS = {
     { label: 'EI Card Communication Fail', value: 'signal_fault', targetType: 'Electronic Interlocking', defaultUrgency: 'Emergency' },
     { label: 'Block Instrument Failure', value: 'signal_fault', targetType: 'Electronic Interlocking', defaultUrgency: 'Emergency' },
     { label: 'Level Crossing Gate Boom Lock Failure', value: 'signal_fault', targetType: 'Electronic Interlocking', defaultUrgency: 'Emergency' },
+    { label: 'Other / Custom Defect (Describe Below)', value: 'other_defect', targetType: '', defaultUrgency: 'Normal' },
   ],
   'Traction Distribution': [
     { label: 'OHE Contact Wire Sag', value: 'traction_fault', targetType: 'OHE Catenary Wire', defaultUrgency: 'Emergency' },
@@ -59,6 +61,7 @@ const DEPARTMENT_DEFECT_OPTIONS = {
     { label: 'Auto-Tensioning Device (ATD) Jam', value: 'traction_fault', targetType: 'OHE Catenary Wire', defaultUrgency: 'Normal' },
     { label: 'Structure Earthing Corrosion', value: 'traction_fault', targetType: 'Cantilever Assembly', defaultUrgency: 'Normal' },
     { label: 'OHE Tree Branch Infringement', value: 'traction_fault', targetType: 'OHE Catenary Wire', defaultUrgency: 'High' },
+    { label: 'Other / Custom Defect (Describe Below)', value: 'other_defect', targetType: '', defaultUrgency: 'Normal' },
   ],
 };
 
@@ -309,8 +312,19 @@ export default function SubmitRequest() {
     if (!textToAnalyze || !textToAnalyze.trim()) return;
 
     setClassifying(true);
+
+    const mapToOption = (rawLabel) => {
+      const parts = rawLabel.split('/').map(s => s.trim().toLowerCase());
+      const match = currentDefectOptions.find(opt => {
+        const optLower = opt.label.toLowerCase();
+        return parts.some(part => part.includes(optLower) || optLower.includes(part));
+      });
+      return match ? match.label : rawLabel;
+    };
+
     try {
-      const resp = await fetch('http://127.0.0.1:8000/classify-defect', {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const resp = await fetch(`${API_BASE}/classify-defect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: textToAnalyze, department: deptKey }),
@@ -320,7 +334,7 @@ export default function SubmitRequest() {
         const data = await resp.json();
         if (data.matched && data.detected_sublabel) {
           setAiClassificationResult(data);
-          setSelectedDefectLabel(data.detected_sublabel);
+          setSelectedDefectLabel(mapToOption(data.detected_sublabel));
           if (data.recommended_urgency) {
             setUrgency(data.recommended_urgency);
           }
@@ -398,7 +412,7 @@ export default function SubmitRequest() {
       }
 
       if (matchedOpt) {
-        setSelectedDefectLabel(matchedOpt);
+        setSelectedDefectLabel(mapToOption(matchedOpt));
         setUrgency(matchedUrgency);
         setAiClassificationResult({
           matched: true,
@@ -611,6 +625,10 @@ export default function SubmitRequest() {
       setFeedback({ type: 'error', message: 'Please select a Defect.' });
       return;
     }
+    if (selectedDefectLabel === 'Other / Custom Defect (Describe Below)' && (!defectText || !defectText.trim())) {
+      setFeedback({ type: 'error', message: 'Please provide a description in the Field Notes for custom defects.' });
+      return;
+    }
     if (!selectedAssetId) {
       setFeedback({ type: 'error', message: 'Please select a valid Asset ID.' });
       return;
@@ -673,7 +691,8 @@ export default function SubmitRequest() {
 
       // Step B: Call ML Service POST /score for instant risk evaluation
       try {
-        const scoreRes = await fetch('http://localhost:8000/score', {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const scoreRes = await fetch(`${API_BASE}/score`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ maintenance_request_id: newReqId }),
@@ -688,7 +707,8 @@ export default function SubmitRequest() {
 
       // Step C: Call ML Service POST /detect-conflicts (scoped to this section & request)
       try {
-        const conflictRes = await fetch('http://localhost:8000/detect-conflicts', {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const conflictRes = await fetch(`${API_BASE}/detect-conflicts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ request_id: newReqId, section_id: selectedSection }),
@@ -738,15 +758,49 @@ export default function SubmitRequest() {
     try {
       setActionLoading(req.id);
       const nowIso = new Date().toISOString();
-      const { error } = await supabase
-        .from('maintenance_requests')
-        .update({
-          status: 'in_progress',
-          possession_start_time: nowIso,
-        })
-        .eq('id', req.id);
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-      if (error) throw error;
+      let updateSucceeded = false;
+      try {
+        const resp = await fetch(`${API_BASE}/update-request-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: req.id,
+            status: 'in_progress',
+            possession_start_time: nowIso,
+          }),
+        });
+        if (resp.ok) {
+          updateSucceeded = true;
+        }
+      } catch (apiErr) {
+        console.warn('API /update-request-status call failed, falling back to direct Supabase:', apiErr);
+      }
+
+      if (!updateSucceeded) {
+        const { error } = await supabase
+          .from('maintenance_requests')
+          .update({
+            status: 'in_progress',
+            possession_start_time: nowIso,
+          })
+          .eq('id', req.id);
+        if (error) throw error;
+      }
+
+      // Optimistic local state update so the UI reacts immediately without lag
+      setMyRequests((prev) =>
+        prev.map((r) =>
+          r.id === req.id
+            ? { ...r, status: 'in_progress', possession_start_time: nowIso }
+            : r
+        )
+      );
+
+      // Auto-switch to 'Active on Track' tab so user immediately sees their active track work!
+      setFilter('Active on Track');
+
       setFeedback({ type: 'success', message: `Track possession taken for ${req.id}! Maintenance is now Active on Track.` });
       setTimeout(() => setFeedback(null), 4000);
       fetchMyRequests();
@@ -765,15 +819,49 @@ export default function SubmitRequest() {
     try {
       setActionLoading(req.id);
       const fitText = tsrOption === 'normal' ? 'Fit for Normal Speed' : `Temporary Caution Speed: ${tsrOption} km/h`;
-      const { error } = await supabase
-        .from('maintenance_requests')
-        .update({
-          status: 'completed',
-          track_fit_status: `${fitText}${memoNumber ? ` (Memo: ${memoNumber})` : ''}`,
-        })
-        .eq('id', req.id);
+      const fullStatus = `${fitText}${memoNumber ? ` (Memo: ${memoNumber})` : ''}`;
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-      if (error) throw error;
+      let updateSucceeded = false;
+      try {
+        const resp = await fetch(`${API_BASE}/update-request-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: req.id,
+            status: 'completed',
+            track_fit_status: fullStatus,
+          }),
+        });
+        if (resp.ok) {
+          updateSucceeded = true;
+        }
+      } catch (apiErr) {
+        console.warn('API /update-request-status call failed, falling back to direct Supabase:', apiErr);
+      }
+
+      if (!updateSucceeded) {
+        const { error } = await supabase
+          .from('maintenance_requests')
+          .update({
+            status: 'completed',
+            track_fit_status: fullStatus,
+          })
+          .eq('id', req.id);
+        if (error) throw error;
+      }
+
+      // Optimistic local state update
+      setMyRequests((prev) =>
+        prev.map((r) =>
+          r.id === req.id
+            ? { ...r, status: 'completed', track_fit_status: fullStatus }
+            : r
+        )
+      );
+
+      // Switch to 'Completed' tab so user immediately sees the certified work
+      setFilter('Completed');
       setFitModal({ open: false, req: null });
       setFeedback({ type: 'success', message: `Track Fit certified for ${req.id}! Track cleared and line restored to traffic.` });
       setTimeout(() => setFeedback(null), 4000);
@@ -878,12 +966,12 @@ export default function SubmitRequest() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-[#dce4e5] tracking-tight">Submit Maintenance Request</h1>
-          <p className="text-sm text-[#bac9cc] mt-1 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Submit Maintenance Request</h1>
+          <p className="text-sm text-slate-600 mt-1 flex items-center gap-2">
             <span>Log defect telemetry for</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#00626e]/40 border border-[#00e5ff]/50 text-[#00e5ff] font-mono text-xs font-semibold">
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-mono text-xs font-semibold">
               {department}
             </span>
           </p>
@@ -892,10 +980,10 @@ export default function SubmitRequest() {
         {feedback && (
           <div
             className={`p-3 rounded-lg text-xs font-mono flex items-center gap-2 animate-fadeIn ${feedback.type === 'success'
-              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
               : feedback.type === 'error'
-                ? 'bg-red-500/10 border border-red-500/30 text-red-400'
-                : 'bg-[#00daf3]/10 border border-[#00daf3]/30 text-[#00daf3]'
+                ? 'bg-red-50 border border-red-200 text-red-700'
+                : 'bg-blue-50 border border-blue-200 text-blue-700'
               }`}
           >
             <span className="material-symbols-outlined text-sm">
@@ -909,18 +997,18 @@ export default function SubmitRequest() {
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Form Section (Bento Card) */}
-        <div className="lg:col-span-1 bg-[#192122] rounded-xl border border-[#3b494c] p-4 sm:p-5 shadow-sm flex flex-col gap-3 relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00e5ff]/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600"></div>
 
-          <h2 className="text-base font-bold text-[#dce4e5] flex items-center gap-2 border-b border-[#3b494c] pb-2.5">
-            <span className="material-symbols-outlined text-[#00e5ff] text-[20px]">edit_document</span>
+          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-2.5">
+            <span className="material-symbols-outlined text-blue-700 text-[20px]">edit_document</span>
             Maintenance Telemetry Input
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             {/* Corridor Section */}
             <div className="space-y-1">
-              <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+              <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                 Corridor Section
               </label>
               <select
@@ -932,7 +1020,7 @@ export default function SubmitRequest() {
                   setKmLocation('');
                   setLocationMarker('');
                 }}
-                className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono cursor-pointer"
+                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono cursor-pointer shadow-xs"
                 required
               >
                 <option value="">-- Select Corridor Section --</option>
@@ -946,7 +1034,7 @@ export default function SubmitRequest() {
 
             {/* Track Line / Direction (Station-Aware Real World) */}
             <div className="space-y-1">
-              <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+              <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                 Track Line / Direction (Station Block)
               </label>
               <select
@@ -961,7 +1049,7 @@ export default function SubmitRequest() {
                   }
                 }}
                 disabled={!selectedSection}
-                className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
                 required
               >
                 <option value="">
@@ -978,7 +1066,7 @@ export default function SubmitRequest() {
             {/* Chainage / KM Post & Mast Location */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                   Chainage / KM Post
                 </label>
                 <input
@@ -994,13 +1082,13 @@ export default function SubmitRequest() {
                     }
                   }}
                   placeholder="e.g. 14.5"
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono shadow-xs"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                   Mast / Point Marker
                 </label>
                 <input
@@ -1008,7 +1096,7 @@ export default function SubmitRequest() {
                   value={locationMarker}
                   onChange={(e) => setLocationMarker(e.target.value)}
                   placeholder="e.g. Mast 14/12"
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono shadow-xs"
                 />
               </div>
             </div>
@@ -1016,10 +1104,10 @@ export default function SubmitRequest() {
             {/* Select Defect (Department-Specific Realistic Sub-Labels) */}
             <div className="space-y-1">
               <div className="flex justify-between items-center">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                   Select Defect ({deptKey})
                 </label>
-                <span className="text-[10px] font-mono text-[#00e5ff]">{currentDefectOptions.length} Possible Defects</span>
+                <span className="text-[10px] font-mono text-blue-700 font-semibold">{currentDefectOptions.length} Possible Defects</span>
               </div>
               <select
                 id="select-defect-type"
@@ -1032,7 +1120,7 @@ export default function SubmitRequest() {
                     setUrgency(opt.defaultUrgency);
                   }
                 }}
-                className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-2 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono cursor-pointer"
+                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono cursor-pointer shadow-xs"
                 required
               >
                 <option value="">-- Select Defect --</option>
@@ -1047,15 +1135,15 @@ export default function SubmitRequest() {
             {/* Option to Describe Defect / Field Notes */}
             <div className="space-y-1">
               <div className="flex justify-between items-center">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
-                  Describe Defect / Field Notes <span className="text-[#869294] font-normal normal-case">(Optional)</span>
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
+                  Describe Defect / Field Notes <span className="text-slate-400 font-normal normal-case">(Optional)</span>
                 </label>
                 {defectText.trim() && (
                   <button
                     type="button"
                     onClick={() => handleClassifyDefect(defectText)}
                     disabled={classifying}
-                    className="text-[10px] font-mono text-[#00e5ff] hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] font-mono text-blue-700 hover:underline flex items-center gap-1 cursor-pointer font-semibold"
                   >
                     {classifying ? 'Analyzing...' : '⚡ AI Assist'}
                   </button>
@@ -1066,71 +1154,25 @@ export default function SubmitRequest() {
                 value={defectText}
                 onChange={(e) => setDefectText(e.target.value)}
                 placeholder='Add field notes or describe freely in English / Hinglish (e.g. "Thermite weld crack at km 45.2" or "UP line mast 42 track vibration")...'
-                className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono resize-none"
+                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono resize-none shadow-xs"
               />
               {classifying && (
-                <div className="text-[11px] font-mono text-[#00e5ff] flex items-center gap-1.5 animate-pulse py-0.5">
+                <div className="text-[11px] font-mono text-blue-700 flex items-center gap-1.5 animate-pulse py-0.5">
                   <span className="material-symbols-outlined text-xs animate-spin">sync</span>
                   <span>Analyzing defect telemetry...</span>
                 </div>
               )}
             </div>
 
-            {/* 🎯 Target Asset (Clean, Compact One-Line Auto-Matched Status) */}
-            <div className="bg-[#182124] border border-[#3b494c] rounded-lg px-3 py-2 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <span className="material-symbols-outlined text-[#00e5ff] text-[16px]">fmd_good</span>
-                <div className="truncate">
-                  <span className="text-[#869294] font-mono text-[11px]">Target Asset: </span>
-                  <strong className="text-[#dce4e5]">{selectedAsset?.type || (selectedDefectLabel ? 'Auto-Resolving...' : 'Select defect to resolve')}</strong>
-                  {selectedAssetId ? (
-                    <span className="ml-2 font-mono text-[10px] text-[#00e5ff] bg-[#00e5ff]/10 px-1.5 py-0.5 rounded border border-[#00e5ff]/30">
-                      {selectedAssetId}
-                    </span>
-                  ) : (
-                    <span className="ml-2 font-mono text-[10px] text-[#869294] bg-[#242b2d] px-1.5 py-0.5 rounded border border-[#3b494c]">
-                      Pending
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setManualAssetOverride(!manualAssetOverride)}
-                className="text-[10px] font-mono text-[#869294] hover:text-[#00e5ff] underline ml-2 whitespace-nowrap cursor-pointer"
-              >
-                {manualAssetOverride ? '← Auto' : 'Override'}
-              </button>
-            </div>
-
-            {manualAssetOverride && (
-              <div className="space-y-1 animate-fadeIn">
-                <label className="block text-[10px] font-mono text-[#bac9cc] uppercase tracking-wider">
-                  Manual Asset Selection (Override)
-                </label>
-                <select
-                  value={selectedAssetId}
-                  onChange={(e) => setSelectedAssetId(e.target.value)}
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono cursor-pointer"
-                >
-                  <option value="">-- Select Asset --</option>
-                  {assets.map((ast) => (
-                    <option key={ast.id} value={ast.id}>
-                      {ast.type} — {ast.id} (Criticality: {parseFloat(ast.criticality) >= 0.7 ? 'High' : 'Normal'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             {/* Urgency & Overdue Days */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">Urgency</label>
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">Urgency</label>
                 <select
                   value={urgency}
                   onChange={(e) => setUrgency(e.target.value)}
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono cursor-pointer"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono cursor-pointer shadow-xs"
                   required
                 >
                   <option value="">-- Select Urgency --</option>
@@ -1141,7 +1183,7 @@ export default function SubmitRequest() {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">Overdue Days</label>
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">Overdue Days</label>
                 <input
                   type="number"
                   min="0"
@@ -1149,7 +1191,7 @@ export default function SubmitRequest() {
                   value={overdueDays}
                   onChange={(e) => setOverdueDays(e.target.value)}
                   placeholder="0"
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono shadow-xs"
                 />
               </div>
             </div>
@@ -1157,38 +1199,38 @@ export default function SubmitRequest() {
             {/* Requested Window Start & End (Side by Side in 2 Columns) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                   Window Start
                 </label>
                 <input
                   type="datetime-local"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono shadow-xs"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[11px] font-mono text-[#bac9cc] uppercase tracking-wider">
+                <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
                   Window End
                 </label>
                 <input
                   type="datetime-local"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-2.5 py-1.5 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono shadow-xs"
                   required
                 />
               </div>
             </div>
 
             {/* Submit CTA Button */}
-            <div className="pt-2 border-t border-[#3b494c]">
+            <div className="pt-2 border-t border-slate-200">
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#00e5ff] text-[#00363d] font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 glow-btn hover:bg-[#c3f5ff] transition-all cursor-pointer disabled:opacity-50 text-xs sm:text-sm shadow-md"
+                className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50 text-xs sm:text-sm shadow-xs font-mono"
               >
                 {submitting ? (
                   <span className="flex items-center gap-2 font-mono text-xs">
@@ -1207,26 +1249,26 @@ export default function SubmitRequest() {
         </div>
 
         {/* Table Section (Bento Card) - Live My Requests */}
-        <div className="lg:col-span-2 bg-[#192122] rounded-xl border border-[#3b494c] shadow-sm flex flex-col overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
           {/* Table Header / Controls */}
-          <div className="p-5 border-b border-[#3b494c] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#242b2d]/50">
+          <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#98d0da]">table_rows</span>
-              <h2 className="text-lg font-bold text-[#dce4e5]">
+              <span className="material-symbols-outlined text-blue-700">table_rows</span>
+              <h2 className="text-lg font-bold text-slate-800">
                 {role === 'admin' ? 'Master Field Maintenance & Live Possession Queue' : 'My Department Requests Queue'}
               </h2>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               {/* Filter Pills */}
-              <div className="flex bg-[#2e3638] rounded-lg p-0.5 border border-[#3b494c] overflow-x-auto">
+              <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200 overflow-x-auto">
                 {['All', 'Pending', 'Scheduled', 'Active on Track', 'Completed', 'Conflicts'].map((p) => (
                   <button
                     key={p}
                     onClick={() => setFilter(p)}
                     className={`px-2.5 py-1 rounded-md text-xs font-mono font-medium whitespace-nowrap transition-colors cursor-pointer ${filter === p
-                      ? 'bg-[#192122] text-[#00e5ff] shadow-sm border border-[#3b494c]'
-                      : 'text-[#bac9cc] hover:text-[#dce4e5]'
+                      ? 'bg-white text-blue-700 font-bold shadow-xs border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
                       }`}
                   >
                     {p}
@@ -1236,13 +1278,13 @@ export default function SubmitRequest() {
 
               {/* Search */}
               <div className="relative flex-grow sm:flex-grow-0">
-                <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-[#bac9cc] pointer-events-none">
+                <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-slate-400 pointer-events-none">
                   search
                 </span>
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-36 bg-[#2e3638] border border-[#3b494c] rounded-lg py-1.5 pl-8 pr-3 text-xs text-[#dce4e5] focus:border-[#00e5ff] outline-none font-mono"
+                  className="w-full sm:w-36 bg-white border border-slate-200 rounded-lg py-1.5 pl-8 pr-3 text-xs text-slate-800 focus:border-blue-600 outline-none font-mono shadow-xs"
                   placeholder="Filter ID/Asset..."
                   type="text"
                 />
@@ -1250,7 +1292,7 @@ export default function SubmitRequest() {
 
               <button
                 onClick={fetchMyRequests}
-                className="p-1.5 rounded-lg bg-[#2e3638] hover:bg-[#3b494c] text-[#bac9cc] transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer shadow-xs"
                 title="Refresh Table"
               >
                 <span className="material-symbols-outlined text-[16px]">refresh</span>
@@ -1262,29 +1304,29 @@ export default function SubmitRequest() {
           <div className="overflow-x-auto overflow-y-auto max-h-[540px] flex-grow">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-[#080f11] border-b border-[#3b494c]">
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold">Request ID</th>
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold">Section & Asset</th>
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold">Defect Type</th>
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold">Window & Timer</th>
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold text-center">Risk Score</th>
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold text-center">Conflict Status</th>
-                  <th className="py-3 px-4 text-xs font-mono text-[#bac9cc] tracking-wider uppercase font-semibold text-right">Status & Action</th>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold">Request ID</th>
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold">Section & Asset</th>
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold">Defect Type</th>
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold">Window & Timer</th>
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold text-center">Risk Score</th>
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold text-center">Conflict Status</th>
+                  <th className="py-3 px-4 text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold text-right">Status & Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#3b494c]/40 text-sm font-mono">
+              <tbody className="divide-y divide-slate-100 text-sm font-mono">
                 {loadingRequests ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-xs text-[#bac9cc]">
+                    <td colSpan={7} className="py-8 text-center text-xs text-slate-500">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                        <span className="material-symbols-outlined animate-spin text-sm text-blue-600">refresh</span>
                         <span>Loading live department telemetry...</span>
                       </div>
                     </td>
                   </tr>
                 ) : filteredRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-xs text-[#849396]">
+                    <td colSpan={7} className="py-8 text-center text-xs text-slate-500">
                       No maintenance requests found matching criteria. Submit one using the form!
                     </td>
                   </tr>
@@ -1292,21 +1334,21 @@ export default function SubmitRequest() {
                   filteredRequests.map((req) => {
                     const countdown = getWindowCountdown(req);
                     return (
-                      <tr key={req.id} className="hover:bg-[#242b2d]/50 transition-colors group">
-                        <td className="py-3 px-4 text-[#00e5ff] font-bold text-xs">{req.id}</td>
+                      <tr key={req.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <td className="py-3 px-4 text-blue-700 font-bold text-xs">{req.id}</td>
                         <td className="py-3 px-4">
-                          <div className="text-[#dce4e5] font-semibold text-xs">{req.section_id}</div>
-                          <div className="text-[11px] text-[#849396]">{req.asset_id}</div>
+                          <div className="text-slate-800 font-semibold text-xs">{req.section_id}</div>
+                          <div className="text-[11px] text-slate-500">{req.asset_id}</div>
                           {role === 'admin' && (req.departments?.name || req.department_name) && (
-                            <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-[#00363d] text-[#00daf3] text-[9px] font-bold">
+                            <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold">
                               {req.departments?.name || req.department_name}
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-xs text-[#bac9cc]">
+                        <td className="py-3 px-4 text-xs text-slate-700">
                           {formatDefectLabel(req.defect_type)}
                         </td>
-                        <td className="py-3 px-4 text-xs text-[#bac9cc]">
+                        <td className="py-3 px-4 text-xs text-slate-700">
                           <div>{formatWindow(req.requested_window_start, req.requested_window_end)}</div>
                           {countdown && (
                             <div className={`text-[10px] font-mono mt-0.5 ${countdown.color}`}>
@@ -1318,22 +1360,22 @@ export default function SubmitRequest() {
                           {req.risk_score !== null && req.risk_score !== undefined ? (
                             <span
                               className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full font-bold text-xs border ${req.risk_score >= 0.7
-                                ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                                ? 'bg-red-50 text-red-700 border-red-200'
                                 : req.risk_score >= 0.4
-                                  ? 'bg-amber-400/10 text-amber-400 border-amber-400/30'
-                                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 }`}
                             >
-                              {(req.risk_score * 100).toFixed(0)}
+                              {Number(req.risk_score).toFixed(4)}
                             </span>
                           ) : (
-                            <span className="text-[#849396] text-xs">Pending</span>
+                            <span className="text-slate-400 text-xs">Pending</span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-center">
                           {req.conflict_flag ? (
                             <span
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-500/10 border border-red-500/30 text-red-400"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-50 border border-red-200 text-red-700"
                               title={
                                 req.conflicting_with
                                   ? `Conflicts with: ${req.conflicting_with}`
@@ -1342,7 +1384,7 @@ export default function SubmitRequest() {
                                     : 'Conflict detected'
                               }
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                               <span>
                                 {req.conflicting_with
                                   ? `Conflict (${req.conflicting_with.slice(0, 14)})`
@@ -1352,8 +1394,8 @@ export default function SubmitRequest() {
                               </span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                               <span>Clean Slot</span>
                             </span>
                           )}
@@ -1362,19 +1404,19 @@ export default function SubmitRequest() {
                           <div className="flex flex-col items-end gap-1.5">
                             <span
                               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${req.status === 'in_progress'
-                                ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 font-bold animate-pulse'
+                                ? 'bg-amber-50 border-amber-300 text-amber-800 font-bold animate-pulse'
                                 : req.status === 'completed'
-                                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 font-bold'
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-bold'
                                   : req.status === 'scheduled'
-                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                     : req.status === 'proposed'
-                                      ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                                      ? 'bg-blue-50 border-blue-200 text-blue-700'
                                       : req.status === 'scored'
-                                        ? 'bg-[#00e5ff]/10 border-[#00e5ff]/30 text-[#00e5ff]'
-                                        : 'bg-[#2e3638] border-[#3b494c] text-[#bac9cc]'
+                                        ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                        : 'bg-slate-100 border-slate-200 text-slate-700'
                                 }`}
                             >
-                              {req.status === 'in_progress' && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>}
+                              {req.status === 'in_progress' && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>}
                               <span>{req.status === 'in_progress' ? 'Active on Track' : req.status === 'completed' ? 'Completed (Fit)' : req.status}</span>
                             </span>
 
@@ -1383,7 +1425,7 @@ export default function SubmitRequest() {
                               <button
                                 disabled={actionLoading === req.id}
                                 onClick={() => handleTakePossession(req)}
-                                className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                className="px-2.5 py-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
                                 title="Field gang takes track possession"
                               >
                                 <span className="material-symbols-outlined text-[14px]">play_circle</span>
@@ -1399,7 +1441,7 @@ export default function SubmitRequest() {
                                   setFitModal({ open: true, req });
                                   setMemoNumber(`TF-${req.section_id}-${new Date().toISOString().slice(5, 10).replace('-', '')}`);
                                 }}
-                                className="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-mono font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                className="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
                                 title="Certify track fitness and restore traffic"
                               >
                                 <span className="material-symbols-outlined text-[14px]">verified</span>
@@ -1417,28 +1459,28 @@ export default function SubmitRequest() {
           </div>
 
           {/* Table Footer */}
-          <div className="p-4 border-t border-[#3b494c] flex items-center justify-between text-xs text-[#bac9cc] bg-[#2e3638]/20 font-mono">
+          <div className="p-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 bg-slate-50 font-mono">
             <span>Showing {filteredRequests.length} live records</span>
-            <span className="text-[#00e5ff]">Live Telemetry Stream Active</span>
+            <span className="text-blue-700 font-semibold">Live Telemetry Stream Active</span>
           </div>
         </div>
       </div>
 
       {/* Track Fit & Completion Modal */}
       {fitModal.open && fitModal.req && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#192122] border border-[#3b494c] rounded-xl shadow-2xl max-w-md w-full p-5 space-y-4 font-mono text-xs animate-fadeIn">
-            <div className="flex justify-between items-center border-b border-[#3b494c] pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-2xl max-w-md w-full p-5 space-y-4 font-mono text-xs animate-fadeIn">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-400 text-xl">verified</span>
+                <span className="material-symbols-outlined text-emerald-600 text-xl">verified</span>
                 <div>
-                  <h3 className="font-bold text-[#dce4e5] text-sm">Issue Track Fitness Certificate</h3>
-                  <p className="text-[11px] text-[#849396]">{fitModal.req.id} • {fitModal.req.section_id}</p>
+                  <h3 className="font-bold text-slate-800 text-sm">Issue Track Fitness Certificate</h3>
+                  <p className="text-[11px] text-slate-500">{fitModal.req.id} • {fitModal.req.section_id}</p>
                 </div>
               </div>
               <button
                 onClick={() => setFitModal({ open: false, req: null })}
-                className="text-[#849396] hover:text-[#dce4e5] text-sm cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -1446,38 +1488,38 @@ export default function SubmitRequest() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[11px] text-[#bac9cc] uppercase mb-1">Track Fitness Condition</label>
-                <div className="space-y-1.5 bg-[#242b2d] p-3 rounded-lg border border-[#3b494c]">
-                  <label className="flex items-center gap-2 cursor-pointer text-[#dce4e5]">
+                <label className="block text-[11px] text-slate-600 uppercase mb-1 font-semibold">Track Fitness Condition</label>
+                <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-800">
                     <input
                       type="radio"
                       name="tsrOption"
                       value="normal"
                       checked={tsrOption === 'normal'}
                       onChange={() => setTsrOption('normal')}
-                      className="accent-emerald-400"
+                      className="accent-emerald-600"
                     />
                     <span>Fit for Normal Permissible Speed (100%)</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-[#dce4e5]">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-800">
                     <input
                       type="radio"
                       name="tsrOption"
                       value="30"
                       checked={tsrOption === '30'}
                       onChange={() => setTsrOption('30')}
-                      className="accent-amber-400"
+                      className="accent-amber-600"
                     />
                     <span>Temporary Caution Speed: 30 km/h</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-[#dce4e5]">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-800">
                     <input
                       type="radio"
                       name="tsrOption"
                       value="45"
                       checked={tsrOption === '45'}
                       onChange={() => setTsrOption('45')}
-                      className="accent-amber-400"
+                      className="accent-amber-600"
                     />
                     <span>Temporary Caution Speed: 45 km/h</span>
                   </label>
@@ -1485,28 +1527,28 @@ export default function SubmitRequest() {
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#bac9cc] uppercase mb-1">Clearance Memo / Certificate No.</label>
+                <label className="block text-[11px] text-slate-600 uppercase mb-1 font-semibold">Clearance Memo / Certificate No.</label>
                 <input
                   type="text"
                   placeholder="e.g. TF-ADI-BRC-0912"
                   value={memoNumber}
                   onChange={(e) => setMemoNumber(e.target.value)}
-                  className="w-full bg-[#242b2d] border border-[#3b494c] rounded-lg px-3 py-2 text-[#dce4e5] outline-none focus:border-emerald-400 font-mono text-xs"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 outline-none focus:border-blue-600 font-mono text-xs shadow-xs"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[#3b494c]">
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
               <button
                 onClick={() => setFitModal({ open: false, req: null })}
-                className="px-3 py-1.5 bg-[#242b2d] hover:bg-[#2e3638] text-[#bac9cc] rounded-lg transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer border border-slate-200"
               >
                 Cancel
               </button>
               <button
                 disabled={actionLoading === fitModal.req.id}
                 onClick={handleIssueFitSubmit}
-                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <span className="material-symbols-outlined text-sm">check_circle</span>
                 <span>Certify Fit & Clear Line</span>

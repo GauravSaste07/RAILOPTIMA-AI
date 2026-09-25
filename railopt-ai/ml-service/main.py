@@ -103,15 +103,28 @@ def compute_days_since_inspection(asset_data: Dict[str, Any], request_dt: dateti
 # 1. Initialize FastAPI Application
 app = FastAPI(title="RailOpt AI ML & Optimization Service", version="1.0.0")
 
-# 2. Configure CORS for Local & Containerized Frontend Development
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# 2. Configure CORS for Local, Containerized & Production Cloud Deployments
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if env_origins:
+    origins = [orig.strip() for orig in env_origins.split(",") if orig.strip()]
+else:
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://localhost:80",
+        "http://127.0.0.1:80",
+        "http://localhost",
+        "http://127.0.0.1",
+    ]
+
+# In staging/cloud environments, ALLOW_ORIGIN_REGEX can match subdomains (e.g. https://.*\.vercel\.app)
+allow_origin_regex = os.getenv("ALLOW_ORIGIN_REGEX") or (r"https?://.*" if os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true" else None)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins if not allow_origin_regex else [],
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -131,7 +144,48 @@ if os.path.exists(MODEL_PATH):
 else:
     print(f"[WARN] Model artifact not found at {MODEL_PATH}. Train model first.")
 
-# 4. Pydantic Request Models
+# 4. Production Root & Health Check Endpoints
+@app.get("/")
+def root():
+    return {
+        "service": "RailOpt AI - ML & Optimization Service",
+        "status": "online",
+        "docs_url": "/docs",
+        "health_url": "/health"
+    }
+
+@app.get("/health")
+def health_check():
+    """
+    Production health check verifying:
+    1. Service uptime
+    2. ML model artifact availability
+    3. Database connectivity
+    """
+    model_status = "loaded" if model_bundle is not None else "unavailable"
+    db_status = "unknown"
+    try:
+        sb = get_supabase_client()
+        res = sb.table("departments").select("id", count="exact", head=True).execute()
+        db_status = "connected" if res.count is not None else "connected"
+    except Exception as e:
+        db_status = f"unreachable: {str(e)[:50]}"
+
+    is_healthy = (model_bundle is not None) and ("unreachable" not in db_status)
+
+    return {
+        "status": "healthy" if is_healthy else "degraded",
+        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        "model": {
+            "status": model_status,
+            "artifact_present": os.path.exists(MODEL_PATH)
+        },
+        "database": {
+            "status": db_status
+        }
+    }
+
+# 5. Pydantic Request Models
 class ScoreRequest(BaseModel):
     maintenance_request_id: Optional[str] = Field(None, description="Primary ID of maintenance request (e.g. REQ-00001)")
     request_id: Optional[str] = Field(None, description="Alternative alias for maintenance request ID")
@@ -903,6 +957,47 @@ def score_maintenance_request(payload: ScoreRequest):
         }
     }
 
+    # 5b. Compute the 3 PS-Mandated Pillars (Criticality, Urgency, Impact on Asset Availability)
+    crit_base = 0.9 if criticality_str == "High" else (0.6 if criticality_str == "Medium" else 0.3)
+    stress_val = float(asset_stress_index)
+    failure_mult = min(1.0, failure_count_last_year / 5.0)
+    criticality_pillar_score = round(min(1.0, 0.45 * crit_base + 0.35 * stress_val + 0.20 * failure_mult), 2)
+
+    overdue_norm = min(1.0, overdue_days / 60.0)
+    insp_norm = min(1.0, days_since_last_inspection / 60.0)
+    urgency_pillar_score = round(min(1.0, 0.65 * overdue_norm + 0.35 * insp_norm), 2)
+
+    density_norm = min(1.0, max(0.0, (section_traffic_density - 10.0) / 45.0))
+    availability_impact_score = round(min(1.0, 0.80 * density_norm + 0.20 * (1.0 if is_monsoon else 0.4)), 2)
+
+    ps_three_factors = {
+        "criticality": {
+            "name": "Criticality",
+            "score": criticality_pillar_score,
+            "percentage": int(criticality_pillar_score * 100),
+            "rating": criticality_str,
+            "stress_index": round(asset_stress_index, 3),
+            "failure_count": failure_count_last_year,
+            "summary": f"{criticality_str} criticality asset with stress index {round(asset_stress_index, 2)} and {failure_count_last_year} prior failure(s)."
+        },
+        "urgency": {
+            "name": "Urgency",
+            "score": urgency_pillar_score,
+            "percentage": int(urgency_pillar_score * 100),
+            "overdue_days": overdue_days,
+            "days_since_inspection": days_since_last_inspection,
+            "summary": f"{overdue_days} days overdue beyond maintenance window; {days_since_last_inspection} days since last inspection."
+        },
+        "asset_availability_impact": {
+            "name": "Impact on Asset Availability",
+            "score": availability_impact_score,
+            "percentage": int(availability_impact_score * 100),
+            "traffic_density": section_traffic_density,
+            "monsoon_risk": bool(is_monsoon),
+            "summary": f"Section carries {int(section_traffic_density)} trains/day; failure directly threatens corridor throughput."
+        }
+    }
+
     # 6. Write risk_score back to Supabase
     current_status = req_data.get("status", "pending")
     update_payload = {
@@ -928,6 +1023,7 @@ def score_maintenance_request(payload: ScoreRequest):
         "current_status": new_status,
         "feature_values": feature_dict,
         "feature_breakdown": feature_breakdown,
+        "ps_three_factors": ps_three_factors,
         "improvements": [
             "section_traffic_density computed live from timetable_slots (was hardcoded 48.0)",
             "asset_stress_index computed from asset temporal data (was hardcoded 0.65)",
@@ -1135,8 +1231,11 @@ def run_optimization(
         )
 
     try:
+        import optimizer
+        import importlib
+        importlib.reload(optimizer)
         sb = get_supabase_client()
-        result = optimize_maintenance_blocks(
+        result = optimizer.optimize_maintenance_blocks(
             horizon=horizon_norm,
             start_date=start_date,
             sb=sb,
@@ -1146,6 +1245,197 @@ def run_optimization(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Optimization failed: {str(e)}")
+
+@app.get("/corridor-matrix")
+def get_corridor_matrix(
+    section_id: str = Query("NDLS-GZB", description="Corridor section ID"),
+    target_date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format (defaults to today)")
+):
+    """
+    Returns the unified Corridor Availability Matrix:
+    - Control Office Application (COA) Passenger Time Table slots
+    - Freight Operations Information System (FOIS) Goods Forecast slots
+    - Computed safe maintenance white-space windows (with signalling headway & isolation buffers)
+    - Available track capacity hours for maintenance
+    """
+    sb = get_supabase_client()
+    today_str = (target_date or datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")).split("T")[0]
+
+    start_iso = f"{today_str}T00:00:00+00:00"
+    end_iso = f"{today_str}T23:59:59+00:00"
+
+    try:
+        tt_res = sb.table("timetable_slots") \
+                   .select("*") \
+                   .eq("section_id", section_id) \
+                   .gte("scheduled_arrival", start_iso) \
+                   .lte("scheduled_arrival", end_iso) \
+                   .order("scheduled_arrival") \
+                   .execute()
+        raw_slots = tt_res.data or []
+    except Exception as e:
+        raw_slots = []
+
+    from corridor_availability import (
+        compute_available_windows,
+        SECTION_SIGNALLING_TYPE,
+        HEADWAY_BY_SIGNALLING_TYPE,
+        DEFAULT_HEADWAY_MINUTES
+    )
+
+    windows = compute_available_windows(section_id=section_id, target_date=today_str, sb=sb)
+    sig_type = SECTION_SIGNALLING_TYPE.get(section_id, "absolute_block")
+    headway = HEADWAY_BY_SIGNALLING_TYPE.get(sig_type, DEFAULT_HEADWAY_MINUTES)
+
+    passenger_slots = []
+    goods_slots = []
+
+    for s in raw_slots:
+        is_forecast = bool(s.get("is_forecast", False))
+        slot_item = {
+            "id": s.get("id"),
+            "train_number": s.get("train_number") or ("GOODS-FOIS" if is_forecast else "PASSENGER"),
+            "train_type": "Goods Freight (FOIS Forecast)" if is_forecast else "Passenger / Express (COA Timetable)",
+            "scheduled_arrival": s.get("scheduled_arrival"),
+            "scheduled_departure": s.get("scheduled_departure"),
+            "is_forecast": is_forecast,
+            "confidence": float(s.get("confidence") or (0.75 if is_forecast else 0.98))
+        }
+        if is_forecast:
+            goods_slots.append(slot_item)
+        else:
+            passenger_slots.append(slot_item)
+
+    total_window_mins = sum(w.get("duration_minutes", 0) for w in windows)
+
+    return {
+        "status": "success",
+        "section_id": section_id,
+        "date": today_str,
+        "signalling_type": sig_type.replace("_", " ").title(),
+        "headway_buffer_minutes": headway,
+        "passenger_trains_count": len(passenger_slots),
+        "goods_trains_count": len(goods_slots),
+        "total_trains_count": len(raw_slots),
+        "available_windows_count": len(windows),
+        "available_capacity_hours": round(total_window_mins / 60.0, 1),
+        "passenger_slots": passenger_slots,
+        "goods_slots": goods_slots,
+        "available_windows": windows
+    }
+
+# ==============================================================================
+# FIELD EXECUTION & BLOCK APPROVAL ENDPOINTS (SERVICE ROLE BYPASS FOR RLS)
+# ==============================================================================
+
+class UpdateRequestStatusPayload(BaseModel):
+    id: str
+    status: str
+    possession_start_time: Optional[str] = None
+    track_fit_status: Optional[str] = None
+
+@app.post("/update-request-status")
+def update_request_status(payload: UpdateRequestStatusPayload):
+    sb = get_supabase_client()
+    update_data: Dict[str, Any] = {"status": payload.status}
+    if payload.possession_start_time is not None:
+        update_data["possession_start_time"] = payload.possession_start_time
+    if payload.track_fit_status is not None:
+        update_data["track_fit_status"] = payload.track_fit_status
+
+    res = sb.table("maintenance_requests").update(update_data).eq("id", payload.id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail=f"Request {payload.id} not found or update failed")
+
+    # Automatically synchronize parent block status in blocks table
+    if payload.status in ("in_progress", "completed"):
+        try:
+            import json as _json
+            b_res = sb.table("blocks").select("id, request_ids").contains("request_ids", _json.dumps([payload.id])).execute()
+            if b_res.data:
+                for b in b_res.data:
+                    sb.table("blocks").update({"status": payload.status}).eq("id", b["id"]).execute()
+        except Exception as b_err:
+            print(f"[WARN] Could not update parent block status: {b_err}")
+
+    return {"status": "success", "data": res.data[0]}
+
+class ApproveBlockPayload(BaseModel):
+    block_id: str
+    approved_by: Optional[str] = None
+
+@app.post("/approve-block")
+def approve_block(payload: ApproveBlockPayload):
+    sb = get_supabase_client()
+    b_res = sb.table("blocks").update({
+        "status": "approved",
+        "approved_by": payload.approved_by
+    }).eq("id", payload.block_id).execute()
+
+    if not b_res.data:
+        raise HTTPException(status_code=404, detail=f"Block {payload.block_id} not found")
+
+    block_data = b_res.data[0]
+    req_ids = block_data.get("request_ids") or []
+    if req_ids:
+        sb.table("maintenance_requests").update({"status": "scheduled"}).in_("id", req_ids).execute()
+
+    # Compliance: Write immutable audit record
+    try:
+        sb.table("audit_log").insert({
+            "action": "APPROVE_BLOCK",
+            "entity": f"Block {payload.block_id}",
+            "user_id": payload.approved_by or "SECTION_CONTROLLER",
+            "timestamp": datetime.now(tz=timezone.utc).isoformat()
+        }).execute()
+    except Exception as a_err:
+        print(f"[WARN] Failed to write audit log for block {payload.block_id}: {a_err}")
+
+    return {"status": "success", "block": block_data}
+
+@app.post("/approve-all-blocks")
+def approve_all_blocks(payload: Dict[str, Any] = {}):
+    sb = get_supabase_client()
+    prop_res = sb.table("blocks").select("id, request_ids").eq("status", "proposed").execute()
+    blocks = prop_res.data or []
+    
+    if not blocks:
+        return {
+            "status": "success",
+            "approved_blocks_count": 0,
+            "scheduled_requests_count": 0,
+            "message": "No proposed blocks found to approve"
+        }
+
+    block_ids = [b["id"] for b in blocks]
+    all_req_ids = []
+    for b in blocks:
+        req_ids = b.get("request_ids") or []
+        all_req_ids.extend(req_ids)
+
+    # Perform high-performance batch updates instead of N sequential round-trips
+    sb.table("blocks").update({"status": "approved"}).in_("id", block_ids).execute()
+
+    if all_req_ids:
+        sb.table("maintenance_requests").update({"status": "scheduled"}).in_("id", all_req_ids).execute()
+
+    # Compliance: Write immutable batch audit record
+    approver = payload.get("approved_by") or "SECTION_CONTROLLER"
+    try:
+        sb.table("audit_log").insert({
+            "action": "APPROVE_ALL_BLOCKS",
+            "entity": f"Batch Approval: {len(block_ids)} Blocks ({len(all_req_ids)} Requests)",
+            "user_id": approver,
+            "timestamp": datetime.now(tz=timezone.utc).isoformat()
+        }).execute()
+    except Exception as a_err:
+        print(f"[WARN] Failed to write batch audit log: {a_err}")
+
+    return {
+        "status": "success",
+        "approved_blocks_count": len(block_ids),
+        "scheduled_requests_count": len(all_req_ids)
+    }
 
 if __name__ == "__main__":
     import uvicorn

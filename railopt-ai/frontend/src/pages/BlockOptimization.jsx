@@ -17,13 +17,17 @@ export default function BlockOptimization() {
       setIsOptimizing(true);
       setError(null);
 
+      const today = new Date();
+      const start_date = today.toISOString().split('T')[0];
+
       const params = new URLSearchParams({
         horizon: horizon,
-        start_date: '2026-09-07',
+        start_date: start_date,
         persist_to_db: 'true',
       });
 
-      const response = await fetch(`http://localhost:8000/optimize?${params.toString()}`);
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE}/optimize?${params.toString()}`);
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         throw new Error(errData.detail || `Server error (${response.status})`);
@@ -95,12 +99,12 @@ export default function BlockOptimization() {
     <div className="space-y-6">
       {/* Error Banner */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-between font-mono text-sm">
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center justify-between font-mono text-sm">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[20px]">error</span>
             <span>Error: {error}</span>
           </div>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-white cursor-pointer">
+          <button onClick={() => setError(null)} className="text-red-700 hover:text-white cursor-pointer">
             <span className="material-symbols-outlined text-sm">close</span>
           </button>
         </div>
@@ -108,13 +112,13 @@ export default function BlockOptimization() {
 
       {/* What-If Active Banner */}
       {/* Top Control Bar */}
-      <section className="glass-panel rounded-xl p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#192122]/90 border border-[#3b494c]">
+      <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white border border-slate-200">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <button
             onClick={handleRunOptimizer}
             disabled={isOptimizing}
             id="btn-run-optimizer"
-            className="bg-[#00e5ff] text-[#00363d] font-bold px-6 py-2.5 rounded-lg flex items-center gap-2 glow-btn hover:bg-[#c3f5ff] transition-all cursor-pointer disabled:opacity-50"
+            className="bg-blue-600 text-white font-bold px-6 py-2.5 rounded-lg flex items-center gap-2 glow-btn hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50"
           >
             <span className={`material-symbols-outlined text-[20px] ${isOptimizing ? 'animate-spin' : ''}`}>
               model_training
@@ -122,14 +126,13 @@ export default function BlockOptimization() {
             {isOptimizing ? 'Running CP-SAT Solver...' : 'Generate Optimized Plan'}
           </button>
 
-          <div className="flex items-center bg-[#2e3638] rounded-lg p-1 border border-[#3b494c]">
+          <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
             <button
               onClick={() => handleTimeframeChange('weekly')}
               id="btn-toggle-weekly"
               disabled={isOptimizing}
-              className={`px-4 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${
-                timeframe === 'weekly' ? 'bg-[#192122] text-[#00e5ff] shadow-sm' : 'text-[#bac9cc] hover:text-[#dce4e5]'
-              }`}
+              className={`px-4 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${timeframe === 'weekly' ? 'bg-slate-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'
+                }`}
             >
               Weekly: 7 Days
             </button>
@@ -137,9 +140,8 @@ export default function BlockOptimization() {
               onClick={() => handleTimeframeChange('monthly')}
               id="btn-toggle-monthly"
               disabled={isOptimizing}
-              className={`px-4 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${
-                timeframe === 'monthly' ? 'bg-[#192122] text-[#00e5ff] shadow-sm' : 'text-[#bac9cc] hover:text-[#dce4e5]'
-              }`}
+              className={`px-4 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${timeframe === 'monthly' ? 'bg-slate-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'
+                }`}
             >
               Monthly: 30 Days
             </button>
@@ -147,9 +149,9 @@ export default function BlockOptimization() {
         </div>
 
         <div className="flex items-center gap-3 self-end lg:self-auto">
-          <div className="flex items-center gap-2 bg-[#192122] px-3.5 py-1.5 rounded-full border border-[#00e5ff]/30">
-            <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-pulse"></span>
-            <span className="font-mono text-xs text-[#00e5ff] tracking-tight" id="badge-solver-summary">
+          <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-full border border-blue-200">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+            <span className="font-mono text-xs text-blue-700 tracking-tight" id="badge-solver-summary">
               Solver: OR-Tools {currentPlan?.solver_method ? currentPlan.solver_method.toUpperCase() : 'CP-SAT'} (
               {currentPlan?.solver_time_seconds != null ? `${currentPlan.solver_time_seconds}s` : '1.15s'})
             </span>
@@ -160,51 +162,51 @@ export default function BlockOptimization() {
       {/* KPI Tiles */}
       <section className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
         {/* KPI 1: Scheduled Blocks */}
-        <div className="glass-panel p-5 rounded-xl flex flex-col gap-2 bg-[#192122]/80 border border-[#3b494c]">
-          <div className="flex justify-between items-center text-[#bac9cc]">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-2 bg-white border border-slate-200">
+          <div className="flex justify-between items-center text-slate-600">
             <span className="text-xs font-mono font-semibold uppercase tracking-wider">Total Scheduled Blocks</span>
-            <span className="material-symbols-outlined text-[18px] text-[#00e5ff]">calendar_view_week</span>
+            <span className="material-symbols-outlined text-[18px] text-blue-700">calendar_view_week</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <div className="text-3xl font-black text-[#dce4e5] font-mono tracking-tighter" id="kpi-scheduled-blocks">
+            <div className="text-3xl font-black text-slate-800 font-mono tracking-tighter" id="kpi-scheduled-blocks">
               {currentPlan ? currentPlan.scheduled_blocks_count : '—'}
             </div>
           </div>
-          <div className="text-[11px] font-mono text-[#849396]">
+          <div className="text-[11px] font-mono text-slate-500">
             Covering {currentPlan?.scheduled_requests_count || 0} maintenance requests
           </div>
         </div>
 
         {/* KPI 2: Co-Allocated Rate / Count */}
-        <div className="glass-panel p-5 rounded-xl flex flex-col gap-2 bg-[#192122]/80 border border-[#3b494c]">
-          <div className="flex justify-between items-center text-[#bac9cc]">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-2 bg-white border border-slate-200">
+          <div className="flex justify-between items-center text-slate-600">
             <span className="text-xs font-mono font-semibold uppercase tracking-wider">Co-Allocated Blocks</span>
-            <span className="material-symbols-outlined text-[18px] text-purple-400">merge_type</span>
+            <span className="material-symbols-outlined text-[18px] text-purple-700">merge_type</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <div className="text-3xl font-black text-purple-400 font-mono tracking-tighter" id="kpi-coallocated-blocks">
+            <div className="text-3xl font-black text-purple-700 font-mono tracking-tighter" id="kpi-coallocated-blocks">
               {currentPlan ? currentPlan.co_allocated_blocks_count : '—'}
             </div>
           </div>
-          <div className="text-[11px] font-mono text-[#849396]">
+          <div className="text-[11px] font-mono text-slate-500">
             {currentPlan?.scheduled_blocks_count
               ? `${Math.round(
-                  ((currentPlan.co_allocated_blocks_count || 0) / currentPlan.scheduled_blocks_count) * 100
-                )}% multi-department share rate`
+                ((currentPlan.co_allocated_blocks_count || 0) / currentPlan.scheduled_blocks_count) * 100
+              )}% multi-department share rate`
               : 'Multi-dept shared closures'}
           </div>
         </div>
 
         {/* KPI 3: Solver Status & Horizon */}
-        <div className="glass-panel p-5 rounded-xl flex flex-col gap-2 bg-[#192122]/80 border border-[#3b494c]">
-          <div className="flex justify-between items-center text-[#bac9cc]">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-2 bg-white border border-slate-200">
+          <div className="flex justify-between items-center text-slate-600">
             <span className="text-xs font-mono font-semibold uppercase tracking-wider">Horizon & Solver</span>
-            <span className="material-symbols-outlined text-[18px] text-[#98d0da]">functions</span>
+            <span className="material-symbols-outlined text-[18px] text-blue-500">functions</span>
           </div>
-          <div className="text-lg font-bold font-mono text-[#00e5ff] truncate mt-1" id="kpi-solver-status">
+          <div className="text-lg font-bold font-mono text-blue-700 truncate mt-1" id="kpi-solver-status">
             {currentPlan?.solver_method ? `CP-SAT ${currentPlan.solver_method.toUpperCase()}` : 'CP-SAT Global Optimal'}
           </div>
-          <div className="text-[11px] font-mono text-[#849396]" id="kpi-horizon-range">
+          <div className="text-[11px] font-mono text-slate-500" id="kpi-horizon-range">
             {currentPlan?.date_range
               ? `${currentPlan.date_range.start} → ${currentPlan.date_range.end}`
               : 'Corridor Optimization Engine'}
@@ -215,25 +217,25 @@ export default function BlockOptimization() {
       {/* Main Split Layout */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Optimized Block Schedule */}
-        <div className="lg:col-span-2 glass-panel rounded-xl border border-[#3b494c] flex flex-col overflow-hidden bg-[#192122]/90">
-          <div className="border-b border-[#3b494c] p-4 bg-[#080f11]/60 flex flex-wrap justify-between items-center gap-3">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 border border-slate-200 flex flex-col overflow-hidden bg-white">
+          <div className="border-b border-slate-200 p-4 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
             <div>
-              <h3 className="font-bold text-[#dce4e5] text-base flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#00e5ff]">view_timeline</span>
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <span className="material-symbols-outlined text-blue-700">view_timeline</span>
                 AI Optimized Maintenance Block Roster
               </h3>
-              <p className="text-xs text-[#bac9cc]">
+              <p className="text-xs text-slate-600">
                 Shadow block alignments and non-conflicting corridors ({filteredBlocks.length} blocks)
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-[#bac9cc]">Corridor:</span>
+              <span className="text-xs font-mono text-slate-600">Corridor:</span>
               <select
                 value={selectedCorridor}
                 onChange={(e) => setSelectedCorridor(e.target.value)}
                 id="select-corridor-filter"
-                className="bg-[#2e3638] border border-[#3b494c] rounded px-2.5 py-1 text-xs text-[#dce4e5] font-mono outline-none cursor-pointer"
+                className="bg-slate-100 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-800 font-mono outline-none cursor-pointer"
               >
                 {corridorOptions.map((opt) => (
                   <option key={opt} value={opt}>
@@ -246,62 +248,62 @@ export default function BlockOptimization() {
 
           <div className="p-4 space-y-3 flex-1 overflow-y-auto max-h-[640px]" id="block-roster-container">
             {filteredBlocks.length === 0 ? (
-              <div className="text-center py-12 text-[#849396] font-mono text-sm">
-                <span className="material-symbols-outlined text-4xl block mb-2 text-[#3b494c]">event_busy</span>
+              <div className="text-center py-12 text-slate-500 font-mono text-sm">
+                <span className="material-symbols-outlined text-4xl block mb-2 text-slate-400">event_busy</span>
                 {isOptimizing ? 'Solving mathematical constraints...' : 'No maintenance blocks found for selected filter.'}
               </div>
             ) : (
               filteredBlocks.map((blk, idx) => (
                 <div
                   key={blk.id || idx}
-                  className="p-4 rounded-lg bg-[#242b2d] border border-[#3b494c] hover:border-[#00e5ff]/50 transition-all space-y-3"
+                  className="p-4 rounded-lg bg-white border border-slate-200 hover:border-blue-300 transition-all space-y-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/30">
+                      <span className="px-2 py-0.5 rounded text-xs font-mono font-bold bg-blue-100 text-blue-700 border border-blue-200">
                         {blk.id ? `BLK-${blk.id.substring(0, 8)}` : `BLK-${idx + 1}`}
                       </span>
-                      <span className="font-bold text-[#dce4e5] text-sm">{blk.section_id}</span>
+                      <span className="font-bold text-slate-800 text-sm">{blk.section_id}</span>
                       {blk.co_allocated && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[12px]">join_inner</span>
                           Co-Allocated ({blk.requests_count || blk.request_ids?.length || 2} Depts)
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-[#00daf3] bg-[#00daf3]/10 border border-[#00daf3]/20">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-blue-700 bg-blue-50 border border-blue-200">
                         Conf: {Math.round((blk.confidence || 0.95) * 100)}%
                       </span>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         {blk.status ? blk.status.toUpperCase() : 'PROPOSED'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-[#192122] p-3 rounded-lg border border-[#3b494c]/40 font-mono">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono">
                     <div>
-                      <span className="text-[#849396] block text-[11px]">Departments Involved:</span>
-                      <span className="text-[#dce4e5] font-semibold">
+                      <span className="text-slate-500 block text-[11px]">Departments Involved:</span>
+                      <span className="text-slate-800 font-semibold">
                         {(blk.departments || []).join(' • ') || 'Engineering'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#849396] block text-[11px]">Assigned Window:</span>
-                      <span className="text-[#00e5ff] font-semibold">
+                      <span className="text-slate-500 block text-[11px]">Assigned Window:</span>
+                      <span className="text-blue-700 font-semibold">
                         {formatWindowTime(blk.start_time, blk.end_time)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#849396] block text-[11px]">Included Request IDs:</span>
-                      <span className="text-purple-300 font-semibold break-all">
+                      <span className="text-slate-500 block text-[11px]">Included Request IDs:</span>
+                      <span className="text-purple-700 font-semibold break-all">
                         {(blk.request_ids || []).join(', ')}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#849396] block text-[11px]">Total Block Risk Score:</span>
-                      <span className="text-emerald-400 font-semibold">
+                      <span className="text-slate-500 block text-[11px]">Total Block Risk Score:</span>
+                      <span className="text-emerald-700 font-semibold">
                         {blk.total_risk_score != null ? Number(blk.total_risk_score).toFixed(4) : '0.0000'}
                       </span>
                     </div>
@@ -315,36 +317,36 @@ export default function BlockOptimization() {
         {/* Right Column: Corridor Actions & Shadow Allocation Logic */}
         <div className="space-y-6">
           {/* Shadow Block Co-Allocation Logic Card */}
-          <div className="glass-panel rounded-xl p-5 border border-[#3b494c] bg-[#192122]/90 space-y-4">
-            <h3 className="font-bold text-base text-[#dce4e5] flex items-center gap-2 border-b border-[#3b494c] pb-3">
-              <span className="material-symbols-outlined text-[#00e5ff]">auto_fix_high</span>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border border-slate-200 bg-white space-y-4">
+            <h3 className="font-bold text-base text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
+              <span className="material-symbols-outlined text-blue-700">auto_fix_high</span>
               Shadow Block Co-Allocation Logic
             </h3>
 
-            <div className="space-y-3 text-xs text-[#bac9cc] leading-relaxed">
+            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
               <p>
-                <strong className="text-[#00e5ff]">Multi-Department Bundling:</strong> Cross-department maintenance
+                <strong className="text-blue-700">Multi-Department Bundling:</strong> Cross-department maintenance
                 requests on the same section within a 30-minute time window are automatically bundled into single corridor
                 closures.
               </p>
-              <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg text-purple-300 font-mono text-[11px]">
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-purple-700 font-mono text-[11px]">
                 <span className="font-bold block text-xs mb-1">⚡ Dynamic Bundling:</span>
                 Traction Distribution (+20m buffer), Engineering, and S&T requests are co-scheduled to prevent repeated
                 corridor closures.
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[#3b494c] space-y-2.5">
+            <div className="pt-2 border-t border-slate-200 space-y-2.5">
               <button
                 onClick={() => navigate('/admin-approval')}
-                className="w-full bg-[#00e5ff] hover:bg-[#c3f5ff] text-[#00363d] font-bold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 glow-btn cursor-pointer text-sm"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 glow-btn cursor-pointer text-sm"
               >
                 <span>Publish Plan to Admin Approval</span>
                 <span className="material-symbols-outlined text-sm">assignment_turned_in</span>
               </button>
               <button
                 onClick={() => navigate('/calendar')}
-                className="w-full bg-transparent border border-[#3b494c] hover:bg-[#2e3638] text-[#dce4e5] font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-xs cursor-pointer"
+                className="w-full bg-transparent border border-slate-200 hover:bg-slate-100 text-slate-800 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-xs cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm">calendar_month</span>
                 Inspect Gantt Calendar

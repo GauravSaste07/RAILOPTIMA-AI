@@ -12,6 +12,7 @@ import os
 import sys
 import csv
 import json
+from datetime import datetime, timedelta
 
 # Ensure stdout supports unicode on Windows
 if hasattr(sys.stdout, "reconfigure"):
@@ -60,6 +61,11 @@ def reset_demo_data():
     total_batches = (total_reqs + BATCH_SIZE - 1) // BATCH_SIZE
     print(f"Total maintenance requests in CSV: {total_reqs} across {total_batches} batches ({BATCH_SIZE} rows/batch)")
 
+    # Calculate dynamic date shift based on today vs base date (2026-09-07)
+    base_date = datetime(2026, 9, 7)
+    today = datetime.now()
+    date_shift_days = (today - base_date).days
+
     for i in range(0, total_reqs, BATCH_SIZE):
         batch = req_rows[i:i + BATCH_SIZE]
         batch_num = (i // BATCH_SIZE) + 1
@@ -73,8 +79,11 @@ def reset_demo_data():
             dtype = r["defect_type"].replace("'", "''")
             overdue = int(r["overdue_days"]) if r["overdue_days"] else 0
             density = float(r["section_traffic_density"]) if r.get("section_traffic_density") else 40.0
-            wstart = r["requested_window_start"].replace("'", "''")
-            wend = r["requested_window_end"].replace("'", "''")
+            wstart_dt = datetime.strptime(r["requested_window_start"], "%Y-%m-%d %H:%M:%S") + timedelta(days=date_shift_days)
+            wend_dt = datetime.strptime(r["requested_window_end"], "%Y-%m-%d %H:%M:%S") + timedelta(days=date_shift_days)
+            
+            wstart = wstart_dt.strftime("%Y-%m-%d %H:%M:%S")
+            wend = wend_dt.strftime("%Y-%m-%d %H:%M:%S")
             vals.append(f"('{rid}', '{aid}', '{dept}', '{sec_id}', '{dtype}', {overdue}, {density}, '{wstart}'::timestamptz, '{wend}'::timestamptz, 'pending')")
 
         sql = f"""
@@ -100,34 +109,8 @@ ON CONFLICT (id) DO UPDATE SET
         if batch_num % 3 == 0 or batch_num == total_batches:
             print(f"  → Seeded Batch {batch_num}/{total_batches} ({min(i + BATCH_SIZE, total_reqs)}/{total_reqs} rows)")
 
-    # Also seed the 2 demo test requests (REQ-TEST-0859A and REQ-TEST-3460B)
-    print("\n  → Seeding special demo feature requests (REQ-TEST-0859A, REQ-TEST-3460B)...")
-    demo_test_sql = """
-INSERT INTO public.maintenance_requests (
-  id, asset_id, department_id, section_id, defect_type, overdue_days, criticality, asset_stress_index, section_traffic_density, requested_window_start, requested_window_end, status
-)
-SELECT
-  v.id, v.asset_id, d.id, v.section_id, v.defect_type, v.overdue_days, v.criticality, v.asset_stress_index, v.section_traffic_density, v.requested_window_start, v.requested_window_end, 'pending'
-FROM (VALUES
-  ('REQ-TEST-0859A', 'AST-ENG-001', 'Engineering', 'NDLS-GZB', 'track_defect', 12, 'Medium', 0.62, 48.0, '2026-10-15T02:00:00+00:00'::timestamptz, '2026-10-15T05:30:00+00:00'::timestamptz),
-  ('REQ-TEST-3460B', 'AST-ENG-002', 'Engineering', 'NDLS-GZB', 'track_defect', 48, 'High', 0.77, 48.0, '2026-09-07T01:00:00+00:00'::timestamptz, '2026-09-07T02:30:00+00:00'::timestamptz)
-) AS v(id, asset_id, dept_name, section_id, defect_type, overdue_days, criticality, asset_stress_index, section_traffic_density, requested_window_start, requested_window_end)
-JOIN public.departments d ON d.name = v.dept_name
-ON CONFLICT (id) DO UPDATE SET
-  asset_id = EXCLUDED.asset_id,
-  department_id = EXCLUDED.department_id,
-  section_id = EXCLUDED.section_id,
-  defect_type = EXCLUDED.defect_type,
-  overdue_days = EXCLUDED.overdue_days,
-  criticality = EXCLUDED.criticality,
-  asset_stress_index = EXCLUDED.asset_stress_index,
-  section_traffic_density = EXCLUDED.section_traffic_density,
-  requested_window_start = EXCLUDED.requested_window_start,
-  requested_window_end = EXCLUDED.requested_window_end,
-  status = EXCLUDED.status;
-"""
-    sb.rpc("exec_seed_sql", {"query_text": demo_test_sql}).execute()
-    print("✓ All 2,002 maintenance requests seeded.")
+    # REQ-TEST demo requests removed per user request
+    print("✓ All maintenance requests seeded.")
 
     # 3. Re-run bulk /score-all
     print("\n[Step 3a] Running ML /score-all across all requests...")
@@ -144,9 +127,10 @@ ON CONFLICT (id) DO UPDATE SET
 
     # 4. Generate fresh weekly proposed blocks
     print("\n[Step 4] Running initial weekly optimization to populate proposed blocks for demo...")
+    opt_start_date = (base_date + timedelta(days=date_shift_days)).strftime("%Y-%m-%d")
     opt_res = optimize_maintenance_blocks(
         horizon="weekly",
-        start_date="2026-09-07",
+        start_date=opt_start_date,
         sb=sb,
         persist_to_db=True
     )

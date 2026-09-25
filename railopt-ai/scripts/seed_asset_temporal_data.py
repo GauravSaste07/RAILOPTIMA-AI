@@ -45,7 +45,7 @@ print(f"DB assets: {len(db_assets)}")
 # Department inspection intervals for fallback generation
 # -----------------------------------------------------------------------
 RDSO_INTERVALS = {"Engineering": 30, "Signal & Telecom": 30, "Traction Distribution": 90}
-TODAY = date(2026, 9, 14)
+TODAY = date.today()
 random.seed(42)
 
 def generate_fallback(asset_type: str):

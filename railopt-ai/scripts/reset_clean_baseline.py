@@ -43,8 +43,7 @@ def main():
     SET status = 'pending',
         conflict_flag = false,
         conflicting_with = null,
-        conflicting_approved_block_id = null
-    WHERE id NOT IN ('REQ-TEST-0859A', 'REQ-TEST-3460B');
+        conflicting_approved_block_id = null;
     """
     sb.rpc("exec_seed_sql", {"query_text": reset_sql}).execute()
     print("✓ All standard maintenance requests reset to 'pending' state.")
@@ -128,12 +127,6 @@ def main():
     print("\nblocks status breakdown:")
     for st, count in sorted(block_status_counts.items()):
         print(f"  - {st}: {count}")
-
-    # Verify REQ-TEST-0859A and REQ-TEST-3460B
-    test_reqs = [r for r in all_reqs if r["id"] in ["REQ-TEST-0859A", "REQ-TEST-3460B"]]
-    print("\nTest Requests status:")
-    for tr in test_reqs:
-        print(f"  - {tr['id']}: status={tr.get('status')}, risk_score={tr.get('risk_score')}, conflict_flag={tr.get('conflict_flag')}")
 
     print("\n✓ Baseline reset completed successfully!")
 

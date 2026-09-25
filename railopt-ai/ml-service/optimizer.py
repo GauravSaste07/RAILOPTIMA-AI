@@ -516,6 +516,14 @@ def optimize_maintenance_blocks(
                 total_risk = sum(float(r.get("risk_score") or 0.0) for r, _ in items)
                 depts = [resolve_dept_name(d) for d in list(set(r.get("department_id") or r.get("department") for r, _ in items))]
 
+                # Calculate downtime hours saved by bundling vs separate track closures
+                sum_indiv_dur = sum(
+                    (dateutil.parser.parse(r["requested_window_end"]) - dateutil.parser.parse(r["requested_window_start"])).total_seconds() / 60.0
+                    for r, _ in items
+                )
+                saved_mins = max(0.0, sum_indiv_dur - max_req_dur)
+                saved_hrs = round(saved_mins / 60.0, 1)
+
                 co_allocated_blocks_count += 1
                 co_allocated_requests_count += len(req_ids)
 
@@ -531,9 +539,10 @@ def optimize_maintenance_blocks(
                     "solver_method": solver_method,
                     "co_allocated": True,
                     "requests_count": len(req_ids),
+                    "downtime_saved_hours": saved_hrs,
                     "total_risk_score": round(total_risk, 4),
                     "departments": depts,
-                    "co_allocation_note": f"Bundled {len(req_ids)} cross-department maintenance requests into a unified corridor closure"
+                    "co_allocation_note": f"Bundled {len(req_ids)} cross-department maintenance requests into a unified corridor closure (saved {saved_hrs}h downtime)"
                 })
 
     else:
@@ -603,6 +612,7 @@ def optimize_maintenance_blocks(
         "co_allocated_requests_count": co_allocated_requests_count,
         "requests_status_updated_to_proposed": requests_updated_to_proposed,
         "total_risk_score_scheduled": round(total_risk_scheduled, 2),
+        "total_downtime_saved_hours": round(sum(b.get("downtime_saved_hours", 0.0) for b in blocks), 1),
         "solver_method": solver_method,
         "solver_time_seconds": solver_time,
         "blocks": blocks

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute, AdminRoute } from './components/RouteProtection';
 import Layout from './components/Layout';
@@ -11,6 +12,7 @@ import BlockOptimization from './pages/BlockOptimization';
 import AdminApproval from './pages/AdminApproval';
 import BlockCalendar from './pages/BlockCalendar';
 import Reports from './pages/Reports';
+import LiveNetworkMap from './pages/LiveNetworkMap';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -26,13 +28,13 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#070e10] flex flex-col items-center justify-center p-6 text-center text-[#dce4e5]">
-          <div className="bg-[#121c1f] border border-red-500/40 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center mx-auto text-red-400 text-xl font-bold">
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-800">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-md w-full shadow-lg space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto text-red-500 text-xl font-bold">
               ⚠️
             </div>
-            <h2 className="text-base font-bold text-white tracking-wide">Component Rendering Alert</h2>
-            <p className="text-xs text-[#869294] font-mono leading-relaxed">
+            <h2 className="text-base font-bold text-slate-900 tracking-wide">Component Rendering Alert</h2>
+            <p className="text-xs text-slate-600 font-medium leading-relaxed">
               {this.state.error?.message || 'A temporary interface error occurred.'}
             </p>
             <button
@@ -40,7 +42,7 @@ class ErrorBoundary extends React.Component {
                 this.setState({ hasError: false });
                 window.location.reload();
               }}
-              className="px-4 py-2 rounded-lg bg-[#00e5ff] text-[#002026] text-xs font-bold font-mono hover:bg-[#38bdf8] transition-all"
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-all shadow-xs"
             >
               Refresh Interface
             </button>
@@ -62,7 +64,8 @@ function RootRedirect() {
 
 export default function App() {
   useEffect(() => {
-    fetch('http://localhost:8000/health')
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    fetch(`${API_BASE}/health`)
       .then((res) => res.json())
       .then((data) => {
         console.log('[ML Service Health Check Response]:', data);
@@ -74,6 +77,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ErrorBoundary>
+        <Toaster position="top-right" richColors closeButton />
         <Routes>
           {/* Public Login Route */}
           <Route path="/login" element={<Login />} />
@@ -87,6 +91,7 @@ export default function App() {
               {/* Department + Admin shared routes */}
               <Route path="/submit-request" element={<SubmitRequest />} />
               <Route path="/calendar" element={<BlockCalendar />} />
+              <Route path="/live-map" element={<LiveNetworkMap />} />
 
               {/* Admin-only Protected Routes */}
               <Route element={<AdminRoute />}>
